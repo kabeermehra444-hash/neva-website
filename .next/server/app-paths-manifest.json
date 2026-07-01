@@ -1,8 +1,7 @@
 {
-  "/api/events/route": "app/api/events/route.js",
-  "/about/page": "app/about/page.js",
-  "/page": "app/page.js",
   "/product/[slug]/page": "app/product/[slug]/page.js",
+  "/about/page": "app/about/page.js",
+  "/news-updates/page": "app/news-updates/page.js",
   "/shop/page": "app/shop/page.js",
-  "/news-updates/page": "app/news-updates/page.js"
+  "/page": "app/page.js"
 }
