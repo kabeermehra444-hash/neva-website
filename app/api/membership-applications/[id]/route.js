@@ -1,6 +1,30 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 
+async function sendApprovalEmail({ first_name, last_name, email }) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'NEVA <onboarding@resend.dev>',
+        to: email,
+        subject: `You're in — Welcome to Club NEVA`,
+        html: `
+          <h2>Welcome to Club NEVA, ${first_name}!</h2>
+          <p>Your membership application has been approved. You're officially part of the club.</p>
+          <p>Log in with the email and password you used to apply to access your member portal, register for events, and track your stats.</p>
+          <p style="margin-top:24px"><a href="https://clubneva.com/login">Log In →</a></p>
+        `,
+      }),
+    });
+  } catch (err) {
+    console.error('Failed to send approval email:', err);
+  }
+}
+
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
@@ -26,6 +50,12 @@ export async function PATCH(request, { params }) {
     `;
 
     if (result.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    if (status === 'approved') {
+      const app = result[0];
+      sendApprovalEmail({ first_name: app.first_name, last_name: app.last_name, email: app.email });
+    }
+
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error("Error updating application:", error);
