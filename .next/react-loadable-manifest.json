@@ -1,0 +1,12 @@
+{
+  "app/events/[slug]/page.jsx -> @/lib/auth": {
+    "id": "app/events/[slug]/page.jsx -> @/lib/auth",
+    "files": []
+  },
+  "utils/screenshot-capture.js -> html2canvas": {
+    "id": "utils/screenshot-capture.js -> html2canvas",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_html2canvas_dist_html2canvas_js.js"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(psql *)",
+      "Bash(node *)",
+      "Bash(grep -E \"^pg$|^postgres$\")",
+      "Bash(curl -s --max-time 5 \"https://ep-wandering-boat-aj6r0ksh.c-3.us-east-2.aws.neon.tech\")",
+      "Bash(curl -s --max-time 5 \"https://api.neon.tech\")",
+      "Bash(npm list *)"
+    ]
+  }
+}
