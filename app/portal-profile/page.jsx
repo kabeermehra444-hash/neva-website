@@ -98,7 +98,7 @@ export default function PortalProfilePage() {
               {[
                 { label: 'Email Address', value: member?.email, note: 'Primary email for account communications' },
                 { label: 'Phone Number', value: member?.phone || 'Not provided', note: 'Used for event communications' },
-                { label: 'Member Since', value: member?.created_at ? new Date(member.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '—', note: 'Account creation date' },
+                { label: 'Member Since', value: member?.created_at ? new Date(member.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'America/Los_Angeles' }) : '—', note: 'Account creation date' },
                 { label: 'NEVA Cash Balance', value: `$${member?.neva_cash_balance || 0}`, note: 'Earned through wins, redeemable at checkout' },
               ].map(item => (
                 <div key={item.label} className="bg-white/5 border border-white/10 rounded-lg p-6">

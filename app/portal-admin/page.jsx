@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import PortalNav from '@/components/PortalNav';
 import { isAdmin, isLoggedIn, setLoginRedirect } from '@/lib/auth';
+import { pacificWallTimeToUTCISOString } from '@/lib/timezone';
 
 export default function PortalAdminPage() {
   const router = useRouter();
@@ -149,8 +150,12 @@ export default function PortalAdminPage() {
     e.preventDefault();
     setCreatingEvent(true);
     try {
-      const date_time = eventForm.date && eventForm.time ? `${eventForm.date}T${eventForm.time}:00` : eventForm.date || null;
-      const end_time = eventForm.date && eventForm.end_time ? `${eventForm.date}T${eventForm.end_time}:00` : null;
+      const date_time = eventForm.date && eventForm.time
+        ? pacificWallTimeToUTCISOString(eventForm.date, eventForm.time)
+        : eventForm.date || null;
+      const end_time = eventForm.date && eventForm.end_time
+        ? pacificWallTimeToUTCISOString(eventForm.date, eventForm.end_time)
+        : null;
       const payload = {
         description: eventForm.description || null,
         location: eventForm.location || null,
@@ -213,8 +218,8 @@ export default function PortalAdminPage() {
   };
 
   const startEditEvent = (ev) => {
-    const parseDate = (dt) => dt ? new Date(dt).toLocaleDateString('en-CA') : '';
-    const parseTime = (dt) => dt ? new Date(dt).toTimeString().slice(0, 5) : '';
+    const parseDate = (dt) => dt ? new Date(dt).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) : '';
+    const parseTime = (dt) => dt ? new Date(dt).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hourCycle: 'h23', hour: '2-digit', minute: '2-digit' }) : '';
     setEventForm({
       title: ev.title || ev.name || '',
       description: ev.description || '',
@@ -427,7 +432,7 @@ export default function PortalAdminPage() {
                               <p className="text-sm text-gray-300 leading-relaxed">{app.why_join}</p>
                             </div>
                           )}
-                          <p className="text-gray-600 text-xs mt-3">Submitted {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—'}</p>
+                          <p className="text-gray-600 text-xs mt-3">Submitted {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'}) : '—'}</p>
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <button onClick={() => approveApp(app)} className="px-5 py-2.5 bg-green-500 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-green-600 transition-colors">
@@ -558,7 +563,7 @@ export default function PortalAdminPage() {
                                   ['Phone', app?.phone || '—'],
                                   ['Instagram', app?.instagram_handle ? `@${app.instagram_handle}` : '—'],
                                   ['Status', m.approved ? 'Approved' : 'Pending'],
-                                  ['Member Since', m.created_at ? new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'],
+                                  ['Member Since', m.created_at ? new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }) : '—'],
                                 ].map(([label, val]) => (
                                   <div key={label}>
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-0.5">{label}</p>
@@ -597,7 +602,7 @@ export default function PortalAdminPage() {
                                   {[
                                     ['Skill Level', app.skill_level || '—'],
                                     ['Play Frequency', app.experience || '—'],
-                                    ['Applied', app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'],
+                                    ['Applied', app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }) : '—'],
                                     ['App Status', app.status || '—'],
                                   ].map(([label, val]) => (
                                     <div key={label}>
@@ -800,7 +805,7 @@ export default function PortalAdminPage() {
                           <div className="flex-1 min-w-0">
                             <p className="font-bold mb-1">{ev.title||ev.name}</p>
                             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-                              {d && <span>{d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · {d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span>}
+                              {d && <span>{d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'})} · {d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Los_Angeles'})}</span>}
                               {ev.location && <span>{ev.location}</span>}
                               {ev.price != null && <span>${parseFloat(ev.price).toFixed(2)} entry</span>}
                               {ev.capacity && <span>{ev.capacity} spots</span>}
@@ -942,7 +947,7 @@ export default function PortalAdminPage() {
                   <option value="" className="bg-black">— Pick an event —</option>
                   {events.map(ev => (
                     <option key={ev.id} value={ev.id} className="bg-black">
-                      {ev.title || ev.name}{ev.date_time ? ` — ${new Date(ev.date_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                      {ev.title || ev.name}{ev.date_time ? ` — ${new Date(ev.date_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : ''}
                     </option>
                   ))}
                 </select>

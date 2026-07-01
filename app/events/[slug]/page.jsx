@@ -201,12 +201,12 @@ export default function EventDetailPage() {
                 {date && (
                   <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                     <p className="text-gray-500 text-xs uppercase tracking-widest mb-2">Date & Time</p>
-                    <p className="font-bold">{date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="font-bold">{date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' })}</p>
                     <p className="text-gray-400 text-sm mt-1">
                       {(() => {
-                        const start = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                        const start = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
                         const endDate = event.end_time ? new Date(event.end_time) : null;
-                        const end = endDate ? endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null;
+                        const end = endDate ? endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : null;
                         return end ? `${start} – ${end}` : start;
                       })()}
                     </p>

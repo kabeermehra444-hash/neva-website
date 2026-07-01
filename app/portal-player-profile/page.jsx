@@ -107,7 +107,7 @@ function PlayerProfileContent() {
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <p className="text-gray-400 text-xs uppercase tracking-widest font-medium mb-3">Member Since</p>
               <p className="font-bold text-lg">
-                {player?.created_at ? new Date(player.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '—'}
+                {player?.created_at ? new Date(player.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'America/Los_Angeles' }) : '—'}
               </p>
             </div>
           </div>

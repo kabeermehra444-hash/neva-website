@@ -119,7 +119,7 @@ export default function EventAllLevelsMixerPage() {
                 </div>
                 <h1 className="font-display text-4xl md:text-6xl font-bold uppercase tracking-tighter text-white mb-3">{event?.name || 'All-Levels Mixer'}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm">
-                    <span className="flex items-center gap-1.5"><i className="ph-bold ph-calendar-blank"></i> {event?.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit' }) : 'Saturday, Nov 02, 2024'}</span>
+                    <span className="flex items-center gap-1.5"><i className="ph-bold ph-calendar-blank"></i> {event?.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Saturday, Nov 02, 2024'}</span>
                     <span className="flex items-center gap-1.5"><i className="ph-bold ph-clock"></i> {event?.start_time || '10:00 AM'} - {event?.end_time || '2:00 PM'}</span>
                     <span className="flex items-center gap-1.5"><i className="ph-bold ph-map-pin"></i> {event?.location || 'Midtown Sports Complex'}</span>
                 </div>

@@ -266,10 +266,10 @@ export default function HomePage() {
                       {date && (
                         <>
                           <p className="font-display text-3xl font-bold uppercase leading-none">
-                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}
                           </p>
                           <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
-                            {date.toLocaleDateString('en-US', { weekday: 'long' })}
+                            {date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/Los_Angeles' })}
                           </p>
                         </>
                       )}

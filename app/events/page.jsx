@@ -49,11 +49,12 @@ export default function EventsPage() {
   const formatDate = (dt) => {
     if (!dt) return null;
     const d = new Date(dt);
+    const tz = 'America/Los_Angeles';
     return {
-      month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-      day: d.getDate(),
-      weekday: d.toLocaleDateString('en-US', { weekday: 'long' }),
-      time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      month: d.toLocaleDateString('en-US', { month: 'short', timeZone: tz }).toUpperCase(),
+      day: d.toLocaleDateString('en-US', { day: 'numeric', timeZone: tz }),
+      weekday: d.toLocaleDateString('en-US', { weekday: 'long', timeZone: tz }),
+      time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: tz }),
     };
   };
 

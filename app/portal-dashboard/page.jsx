@@ -195,7 +195,7 @@ export default function PortalDashboardPage() {
                           <div className="flex-1">
                             <p className="font-bold text-sm mb-1">{ev.title||ev.name}</p>
                             <p className="text-white text-xs">
-                              {d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'}) : '—'}
+                              {d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short',timeZone:'America/Los_Angeles'}) : '—'}
                               {ev.location ? ` · ${ev.location}` : ''}
                             </p>
                           </div>

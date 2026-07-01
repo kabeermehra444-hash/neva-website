@@ -62,7 +62,6 @@ export async function POST(request) {
       last_name,
       email,
       phone,
-      instagram_handle,
       skill_level,
       experience,
       why_join,
@@ -86,11 +85,11 @@ export async function POST(request) {
 
     const result = await sql`
       INSERT INTO membership_applications (
-        first_name, last_name, email, phone, instagram_handle, skill_level, experience, why_join, status, password_hash
+        first_name, last_name, email, phone, skill_level, experience, why_join, status, password_hash
       )
       VALUES (
         ${first_name}, ${last_name}, ${email},
-        ${phone || null}, ${instagram_handle || null}, ${skill_level}, ${experience || null}, ${why_join || null}, ${status}, ${password_hash}
+        ${phone || null}, ${skill_level}, ${experience || null}, ${why_join || null}, ${status}, ${password_hash}
       )
       RETURNING *
     `;
