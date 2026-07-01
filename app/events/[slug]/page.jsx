@@ -293,7 +293,7 @@ export default function EventDetailPage() {
 
             {/* Registration Card */}
             <div className="md:col-span-1">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 sticky top-28">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 md:sticky md:top-28">
                 <h3 className="font-display text-xl uppercase font-bold tracking-tight mb-6">Registration</h3>
 
                 {/* ── Step 1 ── */}

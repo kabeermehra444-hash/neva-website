@@ -213,7 +213,7 @@ export default function CheckoutPage() {
 
               {/* Right — Order Summary */}
               <div className="lg:col-span-2">
-                <div className="bg-gray-50 rounded-2xl p-6 sticky top-28">
+                <div className="bg-gray-50 rounded-2xl p-6 lg:sticky lg:top-28">
                   <h2 className="font-display text-xl uppercase font-bold tracking-tight mb-6">Order Summary</h2>
 
                   {/* Cart Items */}

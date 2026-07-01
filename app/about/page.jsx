@@ -26,7 +26,7 @@ export default function AboutPage() {
               <div className="w-full">
                 <h1
                   className="font-display font-bold uppercase text-white leading-[0.86] tracking-tighter mb-8"
-                  style={{fontSize:'clamp(64px, 11vw, 152px)'}}
+                  style={{fontSize:'clamp(40px, 11vw, 152px)'}}
                 >
                   The<br />Philosophy<br />of NEVA.
                 </h1>
@@ -104,7 +104,7 @@ export default function AboutPage() {
                   <span className="font-display text-xs font-bold text-amber-400/50 tabular-nums">{p.num}</span>
                   <h3
                     className="font-display font-bold uppercase tracking-tighter text-white leading-none"
-                    style={{fontSize:'clamp(48px,9vw,128px)'}}
+                    style={{fontSize:'clamp(32px,9vw,128px)'}}
                   >
                     {p.title}
                   </h3>
@@ -143,7 +143,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-end">
               <h2
                 className="font-display font-bold uppercase tracking-tighter text-white leading-[0.87]"
-                style={{fontSize:'clamp(52px,8vw,112px)'}}
+                style={{fontSize:'clamp(30px,8vw,112px)'}}
               >
                 Why the<br /><span className="text-amber-400">Bee.</span>
               </h2>
@@ -167,7 +167,7 @@ export default function AboutPage() {
                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-amber-400/60 mb-8">Member Rewards</p>
                 <h2
                   className="font-display font-bold uppercase tracking-tighter text-white leading-[0.87] mb-8"
-                  style={{fontSize:'clamp(52px,7vw,100px)'}}
+                  style={{fontSize:'clamp(26px,7vw,100px)'}}
                 >
                   NEVA<br />Cash
                 </h2>
@@ -191,7 +191,7 @@ export default function AboutPage() {
                   <p
                     key={word}
                     className="font-display font-bold uppercase tracking-tighter leading-[0.85] text-amber-400"
-                    style={{fontSize:'clamp(52px,7vw,100px)', opacity}}
+                    style={{fontSize:'clamp(26px,7vw,100px)', opacity}}
                   >
                     {word}
                   </p>
@@ -212,7 +212,7 @@ export default function AboutPage() {
 
               <h2
                 className="font-display font-bold uppercase text-white leading-[0.86] tracking-tighter"
-                style={{fontSize:'clamp(52px,8vw,112px)'}}
+                style={{fontSize:'clamp(30px,8vw,112px)'}}
               >
                 Ready<br />to Join<br />the Club?
               </h2>

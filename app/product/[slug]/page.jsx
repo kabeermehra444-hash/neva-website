@@ -73,7 +73,7 @@ export default function ProductPage() {
           <div className="grid md:grid-cols-2 gap-16 items-start">
 
             {/* ── Image panel ──────────────────────────────────────────────── */}
-            <div className="aspect-square rounded-2xl overflow-hidden sticky top-28">
+            <div className="aspect-square rounded-2xl overflow-hidden md:sticky md:top-28">
               {imageUrl ? (
                 <img
                   src={imageUrl}

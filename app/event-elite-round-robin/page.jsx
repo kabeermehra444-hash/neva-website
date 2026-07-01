@@ -311,7 +311,7 @@ export default function EventEliteRoundRobinPage() {
 
                   {/* Sidebar */}
                   <div className="md:col-span-1">
-                      <div className="sticky top-24 space-y-6">
+                      <div className="md:sticky md:top-24 space-y-6">
                           {/* Registration Card */}
                           <div className="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
                               <div className="flex items-baseline justify-between mb-6">

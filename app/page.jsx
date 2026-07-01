@@ -72,12 +72,27 @@ export default function HomePage() {
             {/* Headline block */}
             <div className="flex-1 min-w-0">
               {/* Logo mark — mobile only, sits above headline as a small emblem */}
-              <div className="lg:hidden mb-5">
-                <img src="/bee.png" alt="" aria-hidden="true" className="h-10 w-auto object-contain opacity-45" />
+              {/* Logo mark — mobile only, centered above headline with the same ambient glow as desktop */}
+              <div className="lg:hidden mb-6 flex justify-center relative">
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    width: '180px', height: '180px',
+                    background: 'radial-gradient(circle at 50% 55%, rgba(251,191,36,0.22) 0%, rgba(251,191,36,0.08) 40%, transparent 70%)',
+                    filter: 'blur(20px)',
+                  }}
+                ></div>
+                <img
+                  src="/bee.png"
+                  alt="NEVA"
+                  aria-hidden="true"
+                  className="relative z-10 h-16 w-auto object-contain"
+                  style={{ opacity: 0.75 }}
+                />
               </div>
               <h1
                 className="font-display font-bold uppercase text-amber-400 leading-[0.86] tracking-tighter"
-                style={{fontSize:'clamp(64px, 11.5vw, 152px)'}}
+                style={{fontSize:'clamp(40px, 11.5vw, 152px)'}}
               >
                 The Club<br />You Wear.
               </h1>
