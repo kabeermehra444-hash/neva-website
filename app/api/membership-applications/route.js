@@ -1,31 +1,21 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { pbkdf2Sync, randomBytes } from 'crypto';
+import { sendEmail } from "@/lib/email";
 
 async function sendNewApplicationEmail({ first_name, last_name, email, why_join }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return;
-  try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'NEVA <onboarding@resend.dev>',
-        to: ['kabeermehra444@gmail.com', 'eva.vacadev@gmail.com'],
-        subject: `New Membership Application — ${first_name} ${last_name}`,
-        html: `
-          <h2>New Membership Application</h2>
-          <p><strong>Name:</strong> ${first_name} ${last_name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Why they want to join:</strong></p>
-          <blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555">${why_join || '(not provided)'}</blockquote>
-          <p style="margin-top:24px"><a href="https://clubneva.com/portal-admin">Review in Admin Panel →</a></p>
-        `,
-      }),
-    });
-  } catch (err) {
-    console.error('Failed to send application email:', err);
-  }
+  await sendEmail({
+    to: ['kabeermehra444@gmail.com', 'eva.vacadev@gmail.com'],
+    subject: `New Membership Application — ${first_name} ${last_name}`,
+    html: `
+      <h2>New Membership Application</h2>
+      <p><strong>Name:</strong> ${first_name} ${last_name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Why they want to join:</strong></p>
+      <blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555">${why_join || '(not provided)'}</blockquote>
+      <p style="margin-top:24px"><a href="https://clubneva.com/portal-admin">Review in Admin Panel →</a></p>
+    `,
+  });
 }
 
 export async function GET(request) {
