@@ -11,7 +11,7 @@ async function sendNewApplicationEmail({ first_name, last_name, email, why_join 
       headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'NEVA <onboarding@resend.dev>',
-        to: 'kabeermehra444@gmail.com',
+        to: ['kabeermehra444@gmail.com', 'evavaca.dev@gmail.com'],
         subject: `New Membership Application — ${first_name} ${last_name}`,
         html: `
           <h2>New Membership Application</h2>

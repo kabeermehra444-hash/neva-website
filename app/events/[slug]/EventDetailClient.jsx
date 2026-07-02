@@ -22,6 +22,7 @@ export default function EventDetailClient() {
   const [exceptionSending, setExceptionSending] = useState(false);
   const [attendees, setAttendees] = useState([]);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [rsvpStatus, setRsvpStatus] = useState('going');
 
   useEffect(() => {
     const member = isApprovedMember();
@@ -55,6 +56,7 @@ export default function EventDetailClient() {
           if (Array.isArray(regs) && regs.length > 0) {
             setRegistered(true);
             setPaymentConfirmed(regs[0].payment_confirmed === true);
+            setRsvpStatus(regs[0].rsvp_status || 'going');
           }
         }
 
@@ -77,7 +79,7 @@ export default function EventDetailClient() {
     }
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (status = 'going') => {
     if (!isMember) {
       if (!loggedIn) {
         setLoginRedirect(`/events/${params.slug}`);
@@ -95,7 +97,7 @@ export default function EventDetailClient() {
       const res = await fetch('/api/event-registrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: event.id, member_id: memberId }),
+        body: JSON.stringify({ event_id: event.id, member_id: memberId, rsvp_status: status }),
       });
       if (res.status === 409) {
         // Already registered — treat as success
@@ -108,6 +110,7 @@ export default function EventDetailClient() {
         return;
       }
       setRegistered(true);
+      setRsvpStatus(status);
       setEvent(ev => ev ? { ...ev, registered_count: (ev.registered_count || 0) + 1 } : ev);
     } catch {
       setRegisterError('Network error. Please check your connection and try again.');
@@ -306,14 +309,22 @@ export default function EventDetailClient() {
 
                 {registered ? (
                   <div className="text-center py-2">
-                    <div className="w-12 h-12 bg-green-500/20 border border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i className="ph-fill ph-check-circle text-2xl text-green-400"></i>
+                    <div className={`w-12 h-12 ${rsvpStatus === 'maybe' ? 'bg-amber-500/20 border-amber-500/30' : 'bg-green-500/20 border-green-500/30'} border rounded-full flex items-center justify-center mx-auto mb-3`}>
+                      <i className={`ph-fill ${rsvpStatus === 'maybe' ? 'ph-question' : 'ph-check-circle'} text-2xl ${rsvpStatus === 'maybe' ? 'text-amber-400' : 'text-green-400'}`}></i>
                     </div>
-                    <p className="font-bold text-green-400 mb-1">You're Registered!</p>
-                    <p className="text-gray-400 text-sm">
-                      {event.playbypoint_url ? 'Step 1 complete — see payment below.' : 'See you at the event.'}
+                    <p className={`font-bold mb-1 ${rsvpStatus === 'maybe' ? 'text-amber-400' : 'text-green-400'}`}>
+                      {rsvpStatus === 'maybe' ? "You're Down as Maybe" : "You're Registered!"}
                     </p>
-                    {!event.playbypoint_url && (
+                    <p className="text-gray-400 text-sm">
+                      {rsvpStatus === 'maybe'
+                        ? 'Let us know when you decide.'
+                        : event.playbypoint_url ? 'Step 1 complete — see payment below.' : 'See you at the event.'}
+                    </p>
+                    {rsvpStatus === 'maybe' ? (
+                      <button onClick={() => handleRegister('going')} disabled={registering} className="mt-4 w-full py-3 bg-white text-black text-sm font-bold uppercase tracking-widest rounded hover:bg-gray-200 transition-colors disabled:opacity-50">
+                        {registering ? 'Updating...' : "I'm Going"}
+                      </button>
+                    ) : !event.playbypoint_url && (
                       <button onClick={() => router.push('/portal-dashboard')} className="mt-4 w-full py-3 bg-white/10 text-white text-sm font-bold uppercase tracking-widest rounded hover:bg-white/20 transition-colors">
                         View Portal
                       </button>
@@ -323,11 +334,18 @@ export default function EventDetailClient() {
                   <>
                     {event.price && <p className="text-3xl font-bold mb-6">${parseFloat(event.price).toFixed(2)}</p>}
                     <button
-                      onClick={handleRegister}
+                      onClick={() => handleRegister('going')}
                       disabled={registering || (spotsLeft !== null && spotsLeft <= 0)}
-                      className="w-full py-4 bg-white text-black font-bold uppercase text-sm tracking-widest rounded-xl transition-all active:scale-95 mb-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+                      className="w-full py-4 bg-white text-black font-bold uppercase text-sm tracking-widest rounded-xl transition-all active:scale-95 mb-3 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
                     >
                       {registering ? 'Registering...' : spotsLeft !== null && spotsLeft <= 0 ? 'Event Full' : 'Register Now'}
+                    </button>
+                    <button
+                      onClick={() => handleRegister('maybe')}
+                      disabled={registering || (spotsLeft !== null && spotsLeft <= 0)}
+                      className="w-full py-4 bg-transparent border border-white/20 text-white font-bold uppercase text-sm tracking-widest rounded-xl transition-all active:scale-95 mb-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10"
+                    >
+                      Maybe
                     </button>
                     {registerError && (
                       <p className="text-red-400 text-xs text-center mb-3">{registerError}</p>

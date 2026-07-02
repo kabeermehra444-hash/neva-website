@@ -34,6 +34,8 @@ export default function PortalAdminPage() {
   const [copiedEventId, setCopiedEventId] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
   const [eventRegs, setEventRegs] = useState([]);
+  const [guestForm, setGuestForm] = useState({ name: '', email: '' });
+  const [addingGuest, setAddingGuest] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState(null);
 
   useEffect(() => {
@@ -206,14 +208,45 @@ export default function PortalAdminPage() {
     } catch {}
   };
 
-  const removeRegistration = async (eventId, memberId, memberName) => {
+  const removeRegistration = async (registrationId, memberName) => {
     if (!confirm(`Remove ${memberName} from this event? This cannot be undone.`)) return;
-    const res = await fetch(`/api/event-registrations?event_id=${eventId}&member_id=${memberId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/event-registrations?id=${registrationId}`, { method: 'DELETE' });
     if (res.ok) {
-      setEventRegs(prev => prev.filter(r => r.member_id !== memberId));
+      setEventRegs(prev => prev.filter(r => r.id !== registrationId));
       showToast(`✓ Removed ${memberName}`);
     } else {
       showToast('Error removing registration', 'error');
+    }
+  };
+
+  const addGuestRegistration = async (eventId) => {
+    if (!guestForm.name.trim()) {
+      showToast('Enter a name first', 'error');
+      return;
+    }
+    setAddingGuest(true);
+    try {
+      const res = await fetch('/api/event-registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_id: eventId,
+          guest_name: guestForm.name.trim(),
+          guest_email: guestForm.email.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setGuestForm({ name: '', email: '' });
+        showToast(`✓ Added ${guestForm.name.trim()}`);
+        fetchEventRegs(eventId);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Error adding guest', 'error');
+      }
+    } catch {
+      showToast('Error adding guest', 'error');
+    } finally {
+      setAddingGuest(false);
     }
   };
 
@@ -748,13 +781,21 @@ export default function PortalAdminPage() {
                         ) : (
                           <div className="space-y-1">
                             {eventRegs.map(r => (
-                              <div key={r.member_id} className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
+                              <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
                                 <div>
-                                  <p className="text-sm font-medium">{r.name}</p>
-                                  <p className="text-xs text-gray-500">{r.email}</p>
+                                  <p className="text-sm font-medium">
+                                    {r.name}
+                                    {r.is_guest && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-white/10 text-gray-400 text-[9px] font-bold uppercase tracking-wider rounded">Guest</span>
+                                    )}
+                                    {r.rsvp_status === 'maybe' && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-amber-400/15 text-amber-400 text-[9px] font-bold uppercase tracking-wider rounded">Maybe</span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{r.email || '—'}</p>
                                 </div>
                                 <button
-                                  onClick={() => removeRegistration(editingEvent.id, r.member_id, r.name)}
+                                  onClick={() => removeRegistration(r.id, r.name)}
                                   className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-red-500/30 transition-colors flex-shrink-0"
                                 >
                                   Remove
@@ -763,6 +804,37 @@ export default function PortalAdminPage() {
                             ))}
                           </div>
                         )}
+
+                        {/* Manually add someone who registered outside the site (e.g. via PlayByPoint directly) */}
+                        <div className="mt-4 pt-4 border-t border-white/10">
+                          <p className="text-gray-600 text-[11px] mb-2">
+                            Add someone who signed up directly on PlayByPoint (not through the site):
+                          </p>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={guestForm.name}
+                              onChange={e => setGuestForm(f => ({ ...f, name: e.target.value }))}
+                              placeholder="Name"
+                              className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-white/40"
+                            />
+                            <input
+                              type="email"
+                              value={guestForm.email}
+                              onChange={e => setGuestForm(f => ({ ...f, email: e.target.value }))}
+                              placeholder="Email (optional)"
+                              className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-white/40"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => addGuestRegistration(editingEvent.id)}
+                              disabled={addingGuest}
+                              className="px-4 py-2 bg-white text-black font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 flex-shrink-0"
+                            >
+                              {addingGuest ? 'Adding...' : 'Add'}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
