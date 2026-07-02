@@ -10,7 +10,7 @@ async function sendExceptionEmail({ name, email, message, event_id }) {
       headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'NEVA <onboarding@resend.dev>',
-        to: ['kabeermehra444@gmail.com', 'evavaca.dev@gmail.com'],
+        to: ['kabeermehra444@gmail.com', 'eva.vacadev@gmail.com'],
         subject: `DUPR Exception Request — ${name}`,
         html: `
           <h2>DUPR Exception Request</h2>
