@@ -80,13 +80,9 @@ export default function EventDetailClient() {
   };
 
   const handleRegister = async (status = 'going') => {
-    if (!isMember) {
-      if (!loggedIn) {
-        setLoginRedirect(`/events/${params.slug}`);
-        router.push('/membership-apply');
-      } else {
-        router.push('/portal-dashboard');
-      }
+    if (!loggedIn) {
+      setLoginRedirect(`/events/${params.slug}`);
+      router.push('/membership-apply');
       return;
     }
     setRegistering(true);
@@ -300,7 +296,7 @@ export default function EventDetailClient() {
                 <h3 className="font-display text-xl uppercase font-bold tracking-tight mb-6">Registration</h3>
 
                 {/* ── Step 1 ── */}
-                {event.playbypoint_url && isMember && (
+                {event.playbypoint_url && loggedIn && (
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[10px] font-bold text-gray-400 flex-shrink-0">1</span>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Reserve your spot</p>
@@ -309,36 +305,66 @@ export default function EventDetailClient() {
 
                 {registered ? (
                   <div className="text-center py-2">
-                    <div className={`w-12 h-12 ${rsvpStatus === 'maybe' ? 'bg-amber-500/20 border-amber-500/30' : 'bg-green-500/20 border-green-500/30'} border rounded-full flex items-center justify-center mx-auto mb-3`}>
-                      <i className={`ph-fill ${rsvpStatus === 'maybe' ? 'ph-question' : 'ph-check-circle'} text-2xl ${rsvpStatus === 'maybe' ? 'text-amber-400' : 'text-green-400'}`}></i>
-                    </div>
-                    <p className={`font-bold mb-1 ${rsvpStatus === 'maybe' ? 'text-amber-400' : 'text-green-400'}`}>
-                      {rsvpStatus === 'maybe' ? "You're Down as Maybe" : "You're Registered!"}
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      {rsvpStatus === 'maybe'
-                        ? 'Let us know when you decide.'
-                        : event.playbypoint_url ? 'Step 1 complete — see payment below.' : 'See you at the event.'}
-                    </p>
                     {rsvpStatus === 'maybe' ? (
-                      <button onClick={() => handleRegister('going')} disabled={registering} className="mt-4 w-full py-3 bg-white text-black text-sm font-bold uppercase tracking-widest rounded hover:bg-gray-200 transition-colors disabled:opacity-50">
-                        {registering ? 'Updating...' : "I'm Going"}
-                      </button>
-                    ) : !event.playbypoint_url && (
-                      <button onClick={() => router.push('/portal-dashboard')} className="mt-4 w-full py-3 bg-white/10 text-white text-sm font-bold uppercase tracking-widest rounded hover:bg-white/20 transition-colors">
-                        View Portal
-                      </button>
+                      <>
+                        <div className="w-12 h-12 bg-amber-500/20 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <i className="ph-fill ph-question text-2xl text-amber-400"></i>
+                        </div>
+                        <p className="font-bold text-amber-400 mb-1">You're Down as Maybe</p>
+                        <p className="text-gray-400 text-sm">Let us know when you decide.</p>
+                        <button onClick={() => handleRegister('going')} disabled={registering} className="mt-4 w-full py-3 bg-white text-black text-sm font-bold uppercase tracking-widest rounded hover:bg-gray-200 transition-colors disabled:opacity-50">
+                          {registering ? 'Updating...' : "I'm Going"}
+                        </button>
+                      </>
+                    ) : event.playbypoint_url && !paymentConfirmed ? (
+                      // Registered but not yet paid — spot is NOT locked in
+                      <>
+                        <div className="w-12 h-12 bg-amber-500/20 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <i className="ph-fill ph-warning text-2xl text-amber-400"></i>
+                        </div>
+                        <p className="font-bold text-amber-400 mb-1">Payment Required</p>
+                        <p className="text-gray-400 text-sm">You're on the list, but your spot isn't secured until you pay. Complete Step 2 below.</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 bg-green-500/20 border border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <i className="ph-fill ph-check-circle text-2xl text-green-400"></i>
+                        </div>
+                        <p className="font-bold text-green-400 mb-1">You're All Set!</p>
+                        <p className="text-gray-400 text-sm">
+                          {event.playbypoint_url ? 'Payment confirmed — see you at the event.' : 'See you at the event.'}
+                        </p>
+                        {!event.playbypoint_url && (
+                          <button onClick={() => router.push('/portal-dashboard')} className="mt-4 w-full py-3 bg-white/10 text-white text-sm font-bold uppercase tracking-widest rounded hover:bg-white/20 transition-colors">
+                            View Portal
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
-                ) : isMember ? (
+                ) : loggedIn ? (
                   <>
-                    {event.price && <p className="text-3xl font-bold mb-6">${parseFloat(event.price).toFixed(2)}</p>}
+                    {!isMember && (
+                      <div className="mb-5 p-3 bg-amber-400/10 border border-amber-400/25 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <i className="ph-fill ph-info text-amber-400 text-base flex-shrink-0 mt-0.5"></i>
+                          <p className="text-amber-100 text-xs leading-relaxed">
+                            <span className="font-bold">Application under review — go ahead and register.</span>
+                            <span className="text-amber-100/70"> You don't need to wait for approval to sign up for events. We'll finalize your membership on our end.</span>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {event.price && <p className="text-3xl font-bold mb-2">${parseFloat(event.price).toFixed(2)}</p>}
+                    {event.playbypoint_url && (
+                      <p className="text-gray-500 text-xs mb-6">Payment on PlayByPoint required to secure your spot.</p>
+                    )}
                     <button
                       onClick={() => handleRegister('going')}
                       disabled={registering || (spotsLeft !== null && spotsLeft <= 0)}
                       className="w-full py-4 bg-white text-black font-bold uppercase text-sm tracking-widest rounded-xl transition-all active:scale-95 mb-3 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
                     >
-                      {registering ? 'Registering...' : spotsLeft !== null && spotsLeft <= 0 ? 'Event Full' : 'Register Now'}
+                      {registering ? 'Registering...' : spotsLeft !== null && spotsLeft <= 0 ? 'Event Full' : event.playbypoint_url ? 'Reserve — Payment Next' : 'Register Now'}
                     </button>
                     <button
                       onClick={() => handleRegister('maybe')}
@@ -351,30 +377,32 @@ export default function EventDetailClient() {
                       <p className="text-red-400 text-xs text-center mb-3">{registerError}</p>
                     )}
                     <div className="mt-4 pt-4 border-t border-white/10">
-                      <p className="text-gray-500 text-xs text-center">Members only. Secure registration.</p>
+                      <p className="text-gray-500 text-xs text-center">
+                        {event.playbypoint_url
+                          ? 'Reserving is Step 1. Payment on PlayByPoint locks your spot in.'
+                          : 'Secure registration.'}
+                      </p>
                     </div>
                   </>
                 ) : (
                   <div className="text-center">
                     {event.price && <p className="text-3xl font-bold mb-6">${parseFloat(event.price).toFixed(2)}</p>}
                     <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <i className="ph ph-lock text-xl text-gray-400"></i>
+                      <i className="ph ph-user-plus text-xl text-gray-400"></i>
                     </div>
-                    <p className="text-white font-bold mb-1">Membership Required</p>
+                    <p className="text-white font-bold mb-1">Join to Register</p>
                     <p className="text-gray-500 text-sm mb-6">
-                      {loggedIn ? 'Your membership application is pending review.' : 'You must be an approved Club NEVA member to register for events.'}
+                      Apply for Club NEVA membership below — you can register for this event on the next step, no need to wait for approval.
                     </p>
-                    {!loggedIn && (
-                      <button onClick={() => router.push('/membership-apply')}
-                        className="w-full py-3 bg-white text-black font-bold uppercase text-sm tracking-widest rounded-xl hover:bg-gray-200 active:scale-95 transition-all">
-                        Join the Club
-                      </button>
-                    )}
+                    <button onClick={() => router.push('/membership-apply')}
+                      className="w-full py-3 bg-white text-black font-bold uppercase text-sm tracking-widest rounded-xl hover:bg-gray-200 active:scale-95 transition-all">
+                      Join the Club
+                    </button>
                   </div>
                 )}
 
                 {/* ── Step 2 — PlayByPoint payment (only when URL is set and user is a member) ── */}
-                {event.playbypoint_url && isMember && (
+                {event.playbypoint_url && loggedIn && (
                   <div className="mt-5 pt-5 border-t border-white/10">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-5 h-5 rounded-full bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-[10px] font-bold text-amber-400 flex-shrink-0">2</span>
