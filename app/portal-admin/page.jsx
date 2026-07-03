@@ -11,6 +11,7 @@ export default function PortalAdminPage() {
   const [applications, setApplications] = useState([]);
   const [members, setMembers] = useState([]);
   const [events, setEvents] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingMember, setEditingMember] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -62,7 +63,7 @@ export default function PortalAdminPage() {
       const [appsRes, memsRes, evRes, spRes] = await Promise.all([
         fetch('/api/membership-applications'),
         fetch('/api/members'),
-        fetch('/api/events'),
+        fetch('/api/events?archived=all'),
         fetch('/api/sponsors'),
       ]);
       setApplications(await appsRes.json().then(d => Array.isArray(d) ? d : []));
@@ -867,50 +868,94 @@ export default function PortalAdminPage() {
                   <i className="ph ph-calendar text-4xl mb-4"></i>
                   <p>No events yet. Create one above.</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {events.map(ev => {
-                    const d = ev.date_time ? new Date(ev.date_time) : null;
-                    return (
-                      <div key={ev.id} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold mb-1">{ev.title||ev.name}</p>
-                            <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-                              {d && <span>{d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'})} · {d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Los_Angeles'})}</span>}
-                              {ev.location && <span>{ev.location}</span>}
-                              {ev.price != null && <span>${parseFloat(ev.price).toFixed(2)} entry</span>}
-                              {ev.capacity && <span>{ev.capacity} spots</span>}
-                              <span className={`font-bold uppercase ${ev.status==='upcoming' ? 'text-green-400' : 'text-gray-500'}`}>{ev.status}</span>
-                            </div>
-                            {ev.description && <p className="text-gray-600 text-xs mt-2 truncate">{ev.description}</p>}
-                            <div className="flex items-center gap-2 mt-2.5">
-                              <span className="text-gray-600 text-[11px] font-mono truncate">{typeof window !== 'undefined' ? window.location.origin : ''}/events/{ev.slug||ev.id}</span>
-                              <button
-                                onClick={() => copyEventLink(`${typeof window !== 'undefined' ? window.location.origin : ''}/events/${ev.slug||ev.id}`, ev.id)}
-                                className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-white/10 hover:border-white/30 text-gray-500 hover:text-white rounded transition-colors flex-shrink-0"
-                              >
-                                {copiedEventId === ev.id ? '✓ Copied!' : 'Copy Link'}
-                              </button>
-                            </div>
+              ) : (() => {
+                // Split into upcoming vs archived. An event is archived once
+                // its end_time (or date_time as fallback) is 4+ hours ago.
+                const now = Date.now();
+                const GRACE_MS = 4 * 60 * 60 * 1000;
+                const isPast = (ev) => {
+                  const dt = ev.end_time || ev.date_time;
+                  if (!dt) return false;
+                  return new Date(dt).getTime() < now - GRACE_MS;
+                };
+                const upcoming = events.filter(ev => !isPast(ev)).sort((a, b) => new Date(a.date_time || 0) - new Date(b.date_time || 0));
+                const archived = events.filter(isPast).sort((a, b) => new Date(b.date_time || 0) - new Date(a.date_time || 0));
+
+                const renderEvent = (ev) => {
+                  const d = ev.date_time ? new Date(ev.date_time) : null;
+                  return (
+                    <div key={ev.id} className="bg-white/5 border border-white/10 rounded-xl px-5 py-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold mb-1">{ev.title||ev.name}</p>
+                          <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                            {d && <span>{d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'})} · {d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Los_Angeles'})}</span>}
+                            {ev.location && <span>{ev.location}</span>}
+                            {ev.price != null && <span>${parseFloat(ev.price).toFixed(2)} entry</span>}
+                            {ev.capacity && <span>{ev.capacity} spots</span>}
+                            <span className={`font-bold uppercase ${ev.status==='upcoming' ? 'text-green-400' : 'text-gray-500'}`}>{ev.status}</span>
                           </div>
-                          <div className="flex gap-2 flex-shrink-0">
-                            <button onClick={() => router.push(`/events/${ev.slug||ev.id}`)} className="px-3 py-1.5 bg-white/10 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-white/20 transition-colors">
-                              View
-                            </button>
-                            <button onClick={() => startEditEvent(ev)} className="px-3 py-1.5 bg-white/10 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-white/20 transition-colors">
-                              Edit
-                            </button>
-                            <button onClick={() => deleteEvent(ev)} className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-red-500/30 transition-colors">
-                              Delete
+                          {ev.description && <p className="text-gray-600 text-xs mt-2 truncate">{ev.description}</p>}
+                          <div className="flex items-center gap-2 mt-2.5">
+                            <span className="text-gray-600 text-[11px] font-mono truncate">{typeof window !== 'undefined' ? window.location.origin : ''}/events/{ev.slug||ev.id}</span>
+                            <button
+                              onClick={() => copyEventLink(`${typeof window !== 'undefined' ? window.location.origin : ''}/events/${ev.slug||ev.id}`, ev.id)}
+                              className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-white/10 hover:border-white/30 text-gray-500 hover:text-white rounded transition-colors flex-shrink-0"
+                            >
+                              {copiedEventId === ev.id ? '✓ Copied!' : 'Copy Link'}
                             </button>
                           </div>
                         </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button onClick={() => router.push(`/events/${ev.slug||ev.id}`)} className="px-3 py-1.5 bg-white/10 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-white/20 transition-colors">
+                            View
+                          </button>
+                          <button onClick={() => startEditEvent(ev)} className="px-3 py-1.5 bg-white/10 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-white/20 transition-colors">
+                            Edit
+                          </button>
+                          <button onClick={() => deleteEvent(ev)} className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-red-500/30 transition-colors">
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                };
+
+                return (
+                  <>
+                    {/* Upcoming */}
+                    <div className="flex items-center gap-3 mb-3 mt-2">
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Upcoming ({upcoming.length})</p>
+                      <div className="flex-1 h-px bg-white/5"></div>
+                    </div>
+                    {upcoming.length === 0 ? (
+                      <p className="text-gray-600 text-sm mb-8">No upcoming events. Create one above.</p>
+                    ) : (
+                      <div className="space-y-3 mb-8">{upcoming.map(renderEvent)}</div>
+                    )}
+
+                    {/* Archived — collapsible */}
+                    <button
+                      onClick={() => setShowArchived(v => !v)}
+                      className="flex items-center gap-3 w-full text-left mb-3"
+                    >
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                        Archived ({archived.length})
+                      </p>
+                      <div className="flex-1 h-px bg-white/5"></div>
+                      <i className={`ph ph-caret-${showArchived ? 'up' : 'down'} text-gray-500 text-sm`}></i>
+                    </button>
+                    {showArchived && (
+                      archived.length === 0 ? (
+                        <p className="text-gray-600 text-sm">No past events yet.</p>
+                      ) : (
+                        <div className="space-y-3 opacity-70">{archived.map(renderEvent)}</div>
+                      )
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
 

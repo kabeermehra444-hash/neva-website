@@ -33,31 +33,48 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const event_type = searchParams.get("event_type");
+    // archived=true → only past events. archived=all → both. anything else → only upcoming.
+    // An event is "past" once its end_time (or date_time if no end_time)
+    // is more than 4 hours behind now — the grace period keeps a live
+    // event visible on its own day even after start.
+    const archived = searchParams.get("archived");
+    const showPast = archived === 'true';
+    const showAll = archived === 'all';
 
     let events;
-    if (status && event_type) {
-      events = await sql`
-        SELECT * FROM events 
-        WHERE status = ${status} AND event_type = ${event_type}
-        ORDER BY date_time ASC
-      `;
-    } else if (status) {
-      events = await sql`
-        SELECT * FROM events 
-        WHERE status = ${status}
-        ORDER BY date_time ASC
-      `;
-    } else if (event_type) {
-      events = await sql`
-        SELECT * FROM events 
-        WHERE event_type = ${event_type}
-        ORDER BY date_time ASC
-      `;
+    if (showAll) {
+      // Admin view — everything
+      if (status && event_type) {
+        events = await sql`SELECT * FROM events WHERE status = ${status} AND event_type = ${event_type} ORDER BY date_time DESC`;
+      } else if (status) {
+        events = await sql`SELECT * FROM events WHERE status = ${status} ORDER BY date_time DESC`;
+      } else if (event_type) {
+        events = await sql`SELECT * FROM events WHERE event_type = ${event_type} ORDER BY date_time DESC`;
+      } else {
+        events = await sql`SELECT * FROM events ORDER BY date_time DESC`;
+      }
+    } else if (showPast) {
+      // Past-only view
+      if (status && event_type) {
+        events = await sql`SELECT * FROM events WHERE status = ${status} AND event_type = ${event_type} AND COALESCE(end_time, date_time) < NOW() - INTERVAL '4 hours' ORDER BY date_time DESC`;
+      } else if (status) {
+        events = await sql`SELECT * FROM events WHERE status = ${status} AND COALESCE(end_time, date_time) < NOW() - INTERVAL '4 hours' ORDER BY date_time DESC`;
+      } else if (event_type) {
+        events = await sql`SELECT * FROM events WHERE event_type = ${event_type} AND COALESCE(end_time, date_time) < NOW() - INTERVAL '4 hours' ORDER BY date_time DESC`;
+      } else {
+        events = await sql`SELECT * FROM events WHERE COALESCE(end_time, date_time) < NOW() - INTERVAL '4 hours' ORDER BY date_time DESC`;
+      }
     } else {
-      events = await sql`
-        SELECT * FROM events 
-        ORDER BY date_time ASC
-      `;
+      // Default — upcoming only
+      if (status && event_type) {
+        events = await sql`SELECT * FROM events WHERE status = ${status} AND event_type = ${event_type} AND (date_time IS NULL OR COALESCE(end_time, date_time) >= NOW() - INTERVAL '4 hours') ORDER BY date_time ASC`;
+      } else if (status) {
+        events = await sql`SELECT * FROM events WHERE status = ${status} AND (date_time IS NULL OR COALESCE(end_time, date_time) >= NOW() - INTERVAL '4 hours') ORDER BY date_time ASC`;
+      } else if (event_type) {
+        events = await sql`SELECT * FROM events WHERE event_type = ${event_type} AND (date_time IS NULL OR COALESCE(end_time, date_time) >= NOW() - INTERVAL '4 hours') ORDER BY date_time ASC`;
+      } else {
+        events = await sql`SELECT * FROM events WHERE (date_time IS NULL OR COALESCE(end_time, date_time) >= NOW() - INTERVAL '4 hours') ORDER BY date_time ASC`;
+      }
     }
 
     return NextResponse.json(events);
