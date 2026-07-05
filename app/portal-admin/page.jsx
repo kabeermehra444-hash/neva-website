@@ -76,26 +76,20 @@ export default function PortalAdminPage() {
 
   const approveApp = async (app) => {
     try {
-      const res = await fetch('/api/members', {
-        method: 'POST', headers: adminHeaders(),
-        body: JSON.stringify({
-          name: `${app.first_name} ${app.last_name}`.trim(),
-          email: app.email,
-          approved: true,
-          neva_cash_balance: 0,
-          password_hash: app.password_hash || null,
-        }),
-      });
-      await fetch(`/api/membership-applications/${app.id}`, {
+      // Server now handles both member creation and status update atomically.
+      const res = await fetch(`/api/membership-applications/${app.id}`, {
         method: 'PATCH', headers: adminHeaders(),
         body: JSON.stringify({ status: 'approved' }),
-      }).catch(() => {});
-      if (res.ok || res.status === 409) {
+      });
+      if (res.ok) {
         showToast(`✓ Approved: ${app.first_name} ${app.last_name}`);
         fetchAll();
       } else if (res.status === 401) {
         showToast('Session expired — please log out and back in.', 'error');
-      } else { showToast('Error approving', 'error'); }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Error approving', 'error');
+      }
     } catch { showToast('Error approving', 'error'); }
   };
 
