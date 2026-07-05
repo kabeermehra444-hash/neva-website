@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request, { params }) {
   try {
@@ -21,6 +22,8 @@ export async function GET(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { id } = await params;
     // event_registrations has NO ACTION FK so we delete those first.
@@ -37,6 +40,8 @@ export async function DELETE(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { id } = await params;
     const { name, description, location, date_time, end_time, price, capacity, dupr_minimum, playbypoint_url, status } = await request.json();

@@ -1,25 +1,28 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
+    // Public callers (e.g. the leaderboard) never receive email addresses.
+    // Only admins get the full records including emails.
+    const isAdminReq = !requireAdmin(request).error;
+
     let members;
     if (status === 'approved') {
-      members = await sql`
-        SELECT id, name, email, approved, wins, losses, rank, neva_cash_balance, created_at, updated_at
-        FROM members
-        WHERE approved = true
-        ORDER BY wins DESC, created_at DESC
-      `;
+      members = isAdminReq
+        ? await sql`SELECT id, name, email, approved, wins, losses, rank, neva_cash_balance, created_at, updated_at FROM members WHERE approved = true ORDER BY wins DESC, created_at DESC`
+        : await sql`SELECT id, name, approved, wins, losses, rank, neva_cash_balance, created_at FROM members WHERE approved = true ORDER BY wins DESC, created_at DESC`;
     } else {
-      members = await sql`
-        SELECT id, name, email, approved, wins, losses, rank, neva_cash_balance, created_at, updated_at
-        FROM members
-        ORDER BY wins DESC, created_at DESC
-      `;
+      // Full (non-approved-filtered) list is admin-only.
+      if (!isAdminReq) {
+        members = await sql`SELECT id, name, approved, wins, losses, rank, neva_cash_balance, created_at FROM members WHERE approved = true ORDER BY wins DESC, created_at DESC`;
+      } else {
+        members = await sql`SELECT id, name, email, approved, wins, losses, rank, neva_cash_balance, created_at, updated_at FROM members ORDER BY wins DESC, created_at DESC`;
+      }
     }
 
     return NextResponse.json(members);
@@ -30,6 +33,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const {

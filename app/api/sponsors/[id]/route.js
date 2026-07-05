@@ -1,7 +1,10 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function PATCH(request, { params }) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { id } = await params;
     const { name, logo_url, description, discount_code, active } = await request.json();
@@ -24,6 +27,8 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { id } = await params;
     await sql`DELETE FROM sponsors WHERE id = ${id}`;

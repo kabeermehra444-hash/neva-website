@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request) {
   try {
@@ -61,6 +62,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const {

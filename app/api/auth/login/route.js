@@ -1,6 +1,7 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { pbkdf2Sync } from 'crypto';
+import { issueAdminToken } from "@/lib/admin-auth";
 
 export async function POST(request) {
   try {
@@ -15,25 +16,37 @@ export async function POST(request) {
       WHERE LOWER(email) = ${email.toLowerCase().trim()}
     `;
 
-    if (result.length === 0) {
-      return NextResponse.json({ error: "No account found with that email address." }, { status: 401 });
-    }
-
     const member = result[0];
 
+    // Uniform failure response for both "no account" and "wrong password"
+    // so an attacker can't tell which emails are registered (prevents
+    // account enumeration).
+    const genericFail = () =>
+      NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
+
+    if (!member) return genericFail();
+
+    // A member with no password_hash cannot log in with a password —
+    // previously any password was accepted, which was a security hole.
+    if (!member.password_hash) return genericFail();
+
+    const [salt, hash] = member.password_hash.split(':');
+    const verify = pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    if (verify !== hash) return genericFail();
+
+    // Password is correct. Only now do we surface approval status, so
+    // enumeration isn't possible via the "pending" message either.
     if (!member.approved) {
       return NextResponse.json({ error: "pending" }, { status: 403 });
     }
 
-    if (member.password_hash) {
-      const [salt, hash] = member.password_hash.split(':');
-      const verify = pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
-      if (verify !== hash) {
-        return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
-      }
-    }
-
     const { password_hash: _omit, ...memberData } = member;
+
+    // If this is an admin, include a signed admin token the browser will
+    // send back on admin-only API calls. Non-admins get no token.
+    const adminToken = issueAdminToken(member.email);
+    if (adminToken) memberData.adminToken = adminToken;
+
     return NextResponse.json(memberData);
   } catch (error) {
     console.error("Login error:", error);

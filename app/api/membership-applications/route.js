@@ -2,6 +2,7 @@ import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { pbkdf2Sync, randomBytes } from 'crypto';
 import { sendEmail } from "@/lib/email";
+import { requireAdmin } from "@/lib/admin-auth";
 
 async function sendNewApplicationEmail({ first_name, last_name, email, why_join }) {
   await sendEmail({
@@ -19,6 +20,8 @@ async function sendNewApplicationEmail({ first_name, last_name, email, why_join 
 }
 
 export async function GET(request) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
@@ -98,6 +101,8 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const { id, status, notes, member_id } = body;

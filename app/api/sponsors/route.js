@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET() {
   try {
@@ -12,6 +13,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { name, logo_url, description, discount_code, active = true } = await request.json();
     if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });

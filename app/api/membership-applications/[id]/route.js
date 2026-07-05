@@ -1,6 +1,7 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
+import { requireAdmin } from "@/lib/admin-auth";
 
 async function sendApprovalEmail({ first_name, last_name, email }) {
   await sendEmail({
@@ -27,6 +28,8 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { id } = await params;
     const body = await request.json();

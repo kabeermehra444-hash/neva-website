@@ -31,7 +31,7 @@ export default function LoginPage() {
       const data = await res.json();
       if (res.status === 403) { setError('Your application is pending review.'); setLoading(false); return; }
       if (!res.ok) { setError(data.error || 'Login failed. Please try again.'); setLoading(false); return; }
-      setStoredMember({ id: data.id, email: data.email, name: data.name || email.split('@')[0], approved: true, wins: data.wins || 0, losses: data.losses || 0, rank: data.rank || null, neva_cash_balance: data.neva_cash_balance || 0 });
+      setStoredMember({ id: data.id, email: data.email, name: data.name || email.split('@')[0], approved: true, wins: data.wins || 0, losses: data.losses || 0, rank: data.rank || null, neva_cash_balance: data.neva_cash_balance || 0, adminToken: data.adminToken });
       const redirect = popLoginRedirect();
       router.push(redirect || '/portal-dashboard');
     } catch (err) { setError('Login failed. Please try again.'); setLoading(false); }

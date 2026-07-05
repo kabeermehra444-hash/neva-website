@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import PortalNav from '@/components/PortalNav';
-import { isAdmin, isLoggedIn, setLoginRedirect } from '@/lib/auth';
+import { isAdmin, isLoggedIn, setLoginRedirect, adminHeaders, getAdminToken } from '@/lib/auth';
 import { pacificWallTimeToUTCISOString } from '@/lib/timezone';
 
 export default function PortalAdminPage() {
@@ -61,10 +61,10 @@ export default function PortalAdminPage() {
     setLoading(true);
     try {
       const [appsRes, memsRes, evRes, spRes] = await Promise.all([
-        fetch('/api/membership-applications'),
-        fetch('/api/members'),
-        fetch('/api/events?archived=all'),
-        fetch('/api/sponsors'),
+        fetch('/api/membership-applications', { headers: adminHeaders() }),
+        fetch('/api/members', { headers: adminHeaders() }),
+        fetch('/api/events?archived=all', { headers: adminHeaders() }),
+        fetch('/api/sponsors', { headers: adminHeaders() }),
       ]);
       setApplications(await appsRes.json().then(d => Array.isArray(d) ? d : []));
       setMembers(await memsRes.json().then(d => Array.isArray(d) ? d : []));
@@ -77,7 +77,7 @@ export default function PortalAdminPage() {
   const approveApp = async (app) => {
     try {
       const res = await fetch('/api/members', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST', headers: adminHeaders(),
         body: JSON.stringify({
           name: `${app.first_name} ${app.last_name}`.trim(),
           email: app.email,
@@ -87,12 +87,14 @@ export default function PortalAdminPage() {
         }),
       });
       await fetch(`/api/membership-applications/${app.id}`, {
-        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        method: 'PATCH', headers: adminHeaders(),
         body: JSON.stringify({ status: 'approved' }),
       }).catch(() => {});
       if (res.ok || res.status === 409) {
         showToast(`✓ Approved: ${app.first_name} ${app.last_name}`);
         fetchAll();
+      } else if (res.status === 401) {
+        showToast('Session expired — please log out and back in.', 'error');
       } else { showToast('Error approving', 'error'); }
     } catch { showToast('Error approving', 'error'); }
   };
@@ -100,7 +102,7 @@ export default function PortalAdminPage() {
   const denyApp = async (app) => {
     if (!confirm(`Deny ${app.first_name} ${app.last_name}?`)) return;
     await fetch(`/api/membership-applications/${app.id}`, {
-      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      method: 'PATCH', headers: adminHeaders(),
       body: JSON.stringify({ status: 'denied' }),
     }).catch(() => {});
     showToast(`Denied: ${app.first_name} ${app.last_name}`);
@@ -124,7 +126,7 @@ export default function PortalAdminPage() {
     try {
       const res = await fetch(`/api/members/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders(),
         body: JSON.stringify({
           wins: newWins,
           losses: +editForm.losses,
@@ -172,12 +174,12 @@ export default function PortalAdminPage() {
       let res;
       if (editingEvent) {
         res = await fetch(`/api/events/${editingEvent.id}`, {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH', headers: adminHeaders(),
           body: JSON.stringify({ name: eventForm.title, ...payload }),
         });
       } else {
         res = await fetch('/api/events', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: adminHeaders(),
           body: JSON.stringify({ title: eventForm.title, ...payload, status: 'upcoming' }),
         });
       }
@@ -229,7 +231,7 @@ export default function PortalAdminPage() {
     try {
       const res = await fetch('/api/event-registrations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders(),
         body: JSON.stringify({
           event_id: eventId,
           guest_name: guestForm.name.trim(),
@@ -273,7 +275,7 @@ export default function PortalAdminPage() {
 
   const deleteEvent = async (ev) => {
     if (!confirm(`Delete "${ev.title || ev.name}"? This cannot be undone.`)) return;
-    const res = await fetch(`/api/events/${ev.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/events/${ev.id}`, { method: 'DELETE', headers: adminHeaders() });
     if (res.ok) { showToast('Event deleted'); fetchAll(); }
     else showToast('Error deleting event', 'error');
   };
@@ -320,7 +322,7 @@ export default function PortalAdminPage() {
         Object.entries(checkinDraft).map(([memberId, checkedIn]) =>
           fetch('/api/event-checkins', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: adminHeaders(),
             body: JSON.stringify({ event_id: parseInt(checkinEventId), member_id: parseInt(memberId), checked_in: checkedIn }),
           })
         )
@@ -337,14 +339,14 @@ export default function PortalAdminPage() {
     try {
       if (editingSponsor) {
         const res = await fetch(`/api/sponsors/${editingSponsor}`, {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH', headers: adminHeaders(),
           body: JSON.stringify(sponsorForm),
         });
         if (res.ok) { showToast('✓ Sponsor updated'); setEditingSponsor(null); }
         else showToast('Error saving', 'error');
       } else {
         const res = await fetch('/api/sponsors', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: adminHeaders(),
           body: JSON.stringify(sponsorForm),
         });
         if (res.ok) { showToast('✓ Sponsor added'); }
@@ -359,7 +361,7 @@ export default function PortalAdminPage() {
 
   const toggleSponsorActive = async (sponsor) => {
     await fetch(`/api/sponsors/${sponsor.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: adminHeaders(),
       body: JSON.stringify({ active: !sponsor.active }),
     });
     fetchAll();

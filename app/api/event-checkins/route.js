@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 // GET /api/event-checkins?event_id=X  — all members + check-in status for an event
 // GET /api/event-checkins?member_id=X — all check-in records for a member
@@ -39,6 +40,8 @@ export async function GET(request) {
 
 // POST /api/event-checkins — upsert a check-in record
 export async function POST(request) {
+  const auth = requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { event_id, member_id, checked_in } = await request.json();
     if (!event_id || !member_id) return NextResponse.json({ error: "event_id and member_id are required" }, { status: 400 });
