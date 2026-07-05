@@ -25,22 +25,29 @@ export async function PATCH(request, { params }) {
     const { id } = await params;
     const { name, email, approved, wins, losses, rank, neva_cash_balance, neva_cash_delta } = await request.json();
 
-    // If neva_cash_delta is provided, adjust the balance atomically
-    // (balance = balance + delta) so two admins editing at once can't
-    // silently overwrite each other. Otherwise fall back to setting an
-    // absolute value.
+    // NEVA cash can be updated two ways:
+    //  - neva_cash_delta: adjust atomically (balance + delta) — safe when
+    //    two admins edit at once.
+    //  - neva_cash_balance: set an absolute value.
+    // Handle the atomic delta in its own dedicated statement so the main
+    // UPDATE stays simple and type-safe.
+    if (neva_cash_delta !== undefined && neva_cash_delta !== null) {
+      await sql`
+        UPDATE members
+        SET neva_cash_balance = COALESCE(neva_cash_balance, 0) + ${neva_cash_delta}
+        WHERE id = ${id}
+      `;
+    }
+
     const result = await sql`
       UPDATE members SET
-        name              = COALESCE(${name              ?? null}, name),
-        email             = COALESCE(${email             ?? null}, email),
-        approved          = COALESCE(${approved          ?? null}, approved),
-        wins              = COALESCE(${wins              ?? null}, wins),
-        losses            = COALESCE(${losses            ?? null}, losses),
-        rank              = COALESCE(${rank              ?? null}, rank),
-        neva_cash_balance = CASE
-          WHEN ${neva_cash_delta ?? null} IS NOT NULL THEN COALESCE(neva_cash_balance, 0) + ${neva_cash_delta ?? 0}
-          ELSE COALESCE(${neva_cash_balance ?? null}, neva_cash_balance)
-        END,
+        name              = COALESCE(${name ?? null}, name),
+        email             = COALESCE(${email ?? null}, email),
+        approved          = COALESCE(${approved ?? null}, approved),
+        wins              = COALESCE(${wins ?? null}, wins),
+        losses            = COALESCE(${losses ?? null}, losses),
+        rank              = COALESCE(${rank ?? null}, rank),
+        neva_cash_balance = COALESCE(${neva_cash_balance ?? null}, neva_cash_balance),
         updated_at        = NOW()
       WHERE id = ${id}
       RETURNING *
