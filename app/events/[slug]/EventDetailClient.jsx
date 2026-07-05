@@ -96,6 +96,11 @@ export default function EventDetailClient() {
         body: JSON.stringify({ event_id: event.id, member_id: memberId, rsvp_status: status }),
       });
       if (res.status === 409) {
+        const data = await res.json().catch(() => ({}));
+        if (/full/i.test(data.error || '')) {
+          setRegisterError('Sorry, this event just filled up.');
+          return;
+        }
         // Already registered — treat as success
         setRegistered(true);
         return;
@@ -107,7 +112,9 @@ export default function EventDetailClient() {
       }
       setRegistered(true);
       setRsvpStatus(status);
-      setEvent(ev => ev ? { ...ev, registered_count: (ev.registered_count || 0) + 1 } : ev);
+      if (status === 'going') {
+        setEvent(ev => ev ? { ...ev, registered_count: (ev.registered_count || 0) + 1 } : ev);
+      }
     } catch {
       setRegisterError('Network error. Please check your connection and try again.');
     } finally {
