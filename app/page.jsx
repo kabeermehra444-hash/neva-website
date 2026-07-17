@@ -146,19 +146,27 @@ export default function HomePage() {
             <h2 className="font-display text-4xl md:text-5xl font-medium uppercase tracking-tight mb-16">How It Works</h2>
             <div className="grid md:grid-cols-4 gap-8 text-left">
               {[
-                { num: '01', icon: 'ph-user-circle-plus', title: 'Join', desc: 'Sign up for Club NEVA membership and get instant access to everything the club has to offer.' },
-                { num: '02', icon: 'ph-calendar-check', title: 'Play', desc: 'Browse upcoming round robins and reserve your spot directly through the member portal.' },
-                { num: '03', icon: 'ph-trophy', title: 'Compete', desc: 'Play weekly, climb the leaderboard, and earn rewards based on your results and performance.' },
-                { num: '04', icon: 'ph-shopping-bag', title: 'Shop', desc: 'Browse NEVA gear and spend your earned rewards at checkout on any item in The Shop.' },
+                { num: '01', icon: 'ph-user-circle-plus', title: 'Join', route: '/membership-apply', desc: 'Sign up for Club NEVA membership and get instant access to everything the club has to offer.' },
+                { num: '02', icon: 'ph-calendar-check', title: 'Play', route: '/events', desc: 'Browse upcoming round robins and reserve your spot directly through the member portal.' },
+                { num: '03', icon: 'ph-trophy', title: 'Compete', route: '/portal-leaderboard', desc: 'Play weekly, climb the leaderboard, and earn rewards based on your results and performance.' },
+                { num: '04', icon: 'ph-shopping-bag', title: 'Shop', route: '/shop', desc: 'Browse NEVA gear and spend your earned rewards at checkout on any item in The Shop.' },
               ].map(step => (
-                <div key={step.num} className="relative">
+                <button
+                  key={step.num}
+                  type="button"
+                  onClick={() => router.push(step.route)}
+                  className="relative group text-left transition-transform duration-200 hover:-translate-y-1 cursor-pointer"
+                >
                   <div className="text-amber-400 font-display text-6xl font-bold leading-none mb-4">{step.num}</div>
                   <div className="w-10 h-10 bg-white/10 border border-white/20 rounded-lg flex items-center justify-center mb-4">
                     <i className={`ph-fill ${step.icon} text-lg text-white`}></i>
                   </div>
-                  <h3 className="font-display text-xl uppercase font-bold mb-2">{step.title}</h3>
+                  <h3 className="font-display text-xl uppercase font-bold mb-2 flex items-center gap-2">
+                    {step.title}
+                    <i className="ph ph-arrow-right text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"></i>
+                  </h3>
                   <p className="text-white text-sm leading-relaxed">{step.desc}</p>
-                </div>
+                </button>
               ))}
             </div>
           </div>

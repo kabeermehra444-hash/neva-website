@@ -32,7 +32,7 @@ export async function generateMetadata({ params }) {
 
   const title = `${event.name} — NEVA`;
   const description = event.description || "A community of serious competitors in Los Angeles. Weekly round robins, real competition, real rewards.";
-  const url = `https://clubneva.com/events/${slug}`;
+  const url = `https://neva-website.vercel.app/events/${slug}`;
 
   return {
     title,

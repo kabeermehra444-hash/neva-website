@@ -24,7 +24,7 @@ async function notifyMembersOfNewEvent(event) {
       ${dateStr ? `<p><strong>${dateStr}</strong></p>` : ''}
       ${event.location ? `<p>${event.location}</p>` : ''}
       ${event.description ? `<p>${event.description}</p>` : ''}
-      <p style="margin-top:24px"><a href="https://clubneva.com/events/${event.id}">View Event & Register →</a></p>
+      <p style="margin-top:24px"><a href="https://neva-website.vercel.app/events/${event.id}">View Event & Register →</a></p>
     `,
   });
 }

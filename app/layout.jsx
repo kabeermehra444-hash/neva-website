@@ -17,7 +17,7 @@ export const metadata = {
     siteName: 'NEVA',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    url: 'https://clubneva.com',
+    url: 'https://neva-website.vercel.app',
   },
   twitter: {
     card: 'summary',
