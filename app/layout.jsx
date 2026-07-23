@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AppGenProvider } from "@/components/appgen-provider";
+import { SITE_URL } from "@/lib/site";
 
 const SITE_TITLE = "NEVA — Where LA Plays for Real";
 const SITE_DESCRIPTION = "A community of serious competitors in Los Angeles. Weekly round robins, real competition, real rewards.";
@@ -10,6 +11,7 @@ const SITE_DESCRIPTION = "A community of serious competitors in Los Angeles. Wee
 // Server Component using the proper Metadata API, instead of hardcoded
 // <head> tags that couldn't be overridden per-page.
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   openGraph: {
@@ -17,7 +19,7 @@ export const metadata = {
     siteName: 'NEVA',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    url: 'https://neva-website.vercel.app',
+    url: SITE_URL,
   },
   twitter: {
     card: 'summary',

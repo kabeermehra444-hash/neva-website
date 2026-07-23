@@ -2,6 +2,7 @@ import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { randomBytes } from 'crypto';
 import { sendEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
 async function sendResetEmail(email, name, resetUrl) {
   await sendEmail({
@@ -55,8 +56,7 @@ export async function POST(request) {
       VALUES (${member.id}, ${token}, ${expiresAt.toISOString()})
     `;
 
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
-    const resetUrl = `${origin}/reset-password?token=${token}`;
+    const resetUrl = `${SITE_URL}/reset-password?token=${token}`;
 
     // Fire-and-forget
     sendResetEmail(member.email, member.name || 'Member', resetUrl);

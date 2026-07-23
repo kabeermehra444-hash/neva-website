@@ -7,6 +7,25 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 
 ---
 
+## Custom domain + password-reset security fix
+
+- **Fixed password-reset poisoning vulnerability:** the forgot-password route
+  was building the reset URL from `request.headers.get('origin')`, a
+  client-controlled header. A forged `Origin` header could send a member a
+  valid reset token pointing at an attacker's domain. Changed to use `SITE_URL`
+  (hardcoded server-side constant) so the reset link always points at
+  `clubneva.com`, regardless of what the request headers say.
+- Introduced `lib/site.js` exporting `SITE_URL = 'https://clubneva.com'` as
+  the single source of truth for the production domain. All email links, Open
+  Graph metadata, and share URLs now import from there — a future domain change
+  is a one-line edit.
+- Added `metadataBase` to `app/layout.jsx` so relative OG image paths resolve
+  correctly under the new domain.
+- Updated all hardcoded `neva-website.vercel.app` references (5 in code, docs)
+  to use `SITE_URL` or `clubneva.com`.
+
+---
+
 ## Security & scaling hardening (audit pass)
 
 - Fixed member-edit 500 error caused by a SQL `CASE` expression with nullable

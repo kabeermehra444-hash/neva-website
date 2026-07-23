@@ -2,6 +2,7 @@ import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
 import { requireAdmin } from "@/lib/admin-auth";
+import { SITE_URL } from "@/lib/site";
 
 async function sendApprovalEmail({ first_name, last_name, email }) {
   await sendEmail({
@@ -11,7 +12,7 @@ async function sendApprovalEmail({ first_name, last_name, email }) {
       <h2>Welcome to Club NEVA, ${first_name}!</h2>
       <p>Your membership application has been approved. You're officially part of the club.</p>
       <p>Log in with the email and password you used to apply to access your member portal, register for events, and track your stats.</p>
-      <p style="margin-top:24px"><a href="https://neva-website.vercel.app/login">Log In →</a></p>
+      <p style="margin-top:24px"><a href="${SITE_URL}/login">Log In →</a></p>
     `,
   });
 }

@@ -4,7 +4,7 @@ The official website for **Club NEVA**, a Los Angeles club running round-robin
 events and a competitive apparel brand (**NEVA**). Members apply online, get
 approved by an admin, then register for events, track stats, and shop apparel.
 
-**Live site:** https://neva-website.vercel.app
+**Live site:** https://clubneva.com
 
 ---
 
@@ -155,10 +155,7 @@ directly against Neon. Run with `node <script>.js`.
 
 ## Known Follow-ups
 
-- **Custom domain:** links in emails and Open Graph tags reference
-  `clubneva.com`, which isn't owned yet. Buying the domain and pointing it at
-  Vercel will make those links resolve and enable proper (non-Gmail) email
-  sending via a verified domain.
-- **Email:** currently sent from a personal Gmail account. Moving to a
-  verified domain (e.g. via Resend) is the long-term fix. All email logic is
-  centralized in `lib/email.js`, so switching providers only touches that file.
+- **Email:** currently sent from a personal Gmail account via Gmail SMTP.
+  Moving to a verified domain sender (e.g. Resend) is the long-term fix.
+  All email logic is centralized in `lib/email.js`, so switching providers
+  only touches that file.

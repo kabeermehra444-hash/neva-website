@@ -115,5 +115,4 @@ lib/timezone.js   All event times are America/Los_Angeles.
   separate statements instead. (This caused a real bug once.)
 - **All times are Pacific.** Use the helpers in `lib/timezone.js`; don't format
   dates raw.
-- **`clubneva.com` is referenced in code but not yet owned** — links in emails
-  and share previews won't resolve until the domain is purchased.
+- **`SITE_URL` in `lib/site.js`** is the single source of truth for the production domain (`clubneva.com`). All email links, OG metadata, and share URLs import from there — a future domain change is a one-line edit.

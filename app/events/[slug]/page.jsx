@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import EventDetailClient from "./EventDetailClient";
+import { SITE_URL } from "@/lib/site";
 
 async function getEvent(slug) {
   try {
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }) {
 
   const title = `${event.name} — NEVA`;
   const description = event.description || "A community of serious competitors in Los Angeles. Weekly round robins, real competition, real rewards.";
-  const url = `https://neva-website.vercel.app/events/${slug}`;
+  const url = `${SITE_URL}/events/${slug}`;
 
   return {
     title,

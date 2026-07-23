@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { pbkdf2Sync, randomBytes } from 'crypto';
 import { sendEmail } from "@/lib/email";
 import { requireAdmin } from "@/lib/admin-auth";
+import { SITE_URL } from "@/lib/site";
 
 async function sendNewApplicationEmail({ first_name, last_name, email, why_join }) {
   await sendEmail({
@@ -14,7 +15,7 @@ async function sendNewApplicationEmail({ first_name, last_name, email, why_join 
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Why they want to join:</strong></p>
       <blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555">${why_join || '(not provided)'}</blockquote>
-      <p style="margin-top:24px"><a href="https://neva-website.vercel.app/portal-admin">Review in Admin Panel →</a></p>
+      <p style="margin-top:24px"><a href="${SITE_URL}/portal-admin">Review in Admin Panel →</a></p>
     `,
   });
 }
