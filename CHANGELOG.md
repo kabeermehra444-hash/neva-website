@@ -7,6 +7,20 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 
 ---
 
+## SEO: pickleball keyword + homepage metadata
+
+- Homepage title: "Club NEVA — Pickleball Club in Los Angeles"
+- Homepage meta description mentions pickleball, round robins, Los Angeles
+- Canonical URL added to homepage metadata pointing at `clubneva.com`
+- Hero eyebrow changed to "NEVA · PICKLEBALL · LOS ANGELES"
+- Hero tagline now reads "...create a pickleball community that extends beyond the court"
+- How It Works step 01 body copy now mentions "pickleball events" naturally
+- Split `app/page.jsx` into a thin server wrapper (metadata export) and
+  `app/HomeClient.jsx` ('use client') — required by Next.js App Router since
+  client components cannot export metadata
+
+---
+
 ## Custom domain + password-reset security fix
 
 - **Fixed password-reset poisoning vulnerability:** the forgot-password route
