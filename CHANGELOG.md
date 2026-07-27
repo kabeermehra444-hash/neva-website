@@ -7,6 +7,23 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 
 ---
 
+## Member token auth (gallery phase 1)
+
+- Added `lib/member-auth.js`: server-side HMAC-SHA256 member token system
+  mirroring `lib/admin-auth.js` — `issueMemberToken`, `verifyMemberToken`,
+  `requireMember`. Payload includes `type:'member'`, `id`, `email`, `exp`
+  (30-day TTL). Expiry and signature are both verified server-side on every
+  protected request.
+- Login route (`/api/auth/login`) now returns `memberToken` for all approved
+  members alongside the existing `adminToken` (admins get both). Change is
+  purely additive — no existing fields altered.
+- `lib/auth.js`: added `getMemberToken()` and `memberHeaders()` client helpers;
+  `setStoredMember`/`clearStoredMember` updated to persist/clear `neva_memberToken`.
+- Known tradeoff: a revoked member retains gallery access until token expiry
+  (30 days), matching existing admin token behavior. Deliberate accepted design.
+
+---
+
 ## SEO: pickleball keyword + homepage metadata
 
 - Homepage title: "Club NEVA — Pickleball Club in Los Angeles"

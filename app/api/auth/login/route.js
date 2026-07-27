@@ -2,6 +2,7 @@ import sql from "@/app/api/utils/sql";
 import { NextResponse } from "next/server";
 import { pbkdf2Sync } from 'crypto';
 import { issueAdminToken } from "@/lib/admin-auth";
+import { issueMemberToken } from "@/lib/member-auth";
 
 export async function POST(request) {
   try {
@@ -46,6 +47,10 @@ export async function POST(request) {
     // send back on admin-only API calls. Non-admins get no token.
     const adminToken = issueAdminToken(member.email);
     if (adminToken) memberData.adminToken = adminToken;
+
+    // All approved members get a signed member token for member-only API routes.
+    const memberToken = issueMemberToken(member.id, member.email);
+    if (memberToken) memberData.memberToken = memberToken;
 
     return NextResponse.json(memberData);
   } catch (error) {
