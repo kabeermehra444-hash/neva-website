@@ -7,6 +7,23 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 
 ---
 
+## Add members-only photo gallery — Phase 1 (admin upload)
+
+- `scripts/migrate-gallery.js`: migration that creates `gallery_photos` table
+  (linked to events via FK, private Vercel Blob URL, `published` flag defaulting false).
+- `app/api/gallery/photos/route.js`: GET (list by event) and POST (multipart upload
+  to Vercel Blob, inserts DB row per file) — admin-only.
+- `app/api/gallery/photos/[id]/route.js`: PATCH (caption/published toggle) and
+  DELETE (blob `del()` + DB row) — admin-only.
+- `app/api/gallery/photos/[id]/serve/route.js`: GET proxy that fetches private blobs
+  with the server-side token and streams them to the browser — admin-only; no blob
+  URL is ever exposed to the client.
+- `app/portal-admin/page.jsx`: new Gallery tab (6th) with event selector, multi-file
+  upload form, photo grid with published toggle and delete per card.
+- Added `@vercel/blob` to dependencies.
+
+---
+
 ## Fix silent email failures in password-reset flow
 
 - `lib/email.js`: `sendEmail` now throws on terminal failure (missing

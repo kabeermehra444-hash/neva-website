@@ -38,6 +38,12 @@ export default function PortalAdminPage() {
   const [guestForm, setGuestForm] = useState({ name: '', email: '' });
   const [addingGuest, setAddingGuest] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState(null);
+  const [galleryEventId, setGalleryEventId] = useState('');
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState([]);
+  const [uploadCaption, setUploadCaption] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -353,6 +359,56 @@ export default function PortalAdminPage() {
     finally { setSavingSponsor(false); }
   };
 
+  const fetchGallery = async (eventId) => {
+    if (!eventId) { setGalleryPhotos([]); return; }
+    setGalleryLoading(true);
+    try {
+      const res = await fetch(`/api/gallery/photos?event_id=${eventId}`, { headers: adminHeaders() });
+      setGalleryPhotos(res.ok ? await res.json() : []);
+    } catch {} finally { setGalleryLoading(false); }
+  };
+
+  const uploadPhotos = async () => {
+    if (!galleryEventId || !uploadFiles.length) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('event_id', galleryEventId);
+    uploadFiles.forEach(f => fd.append('file', f));
+    if (uploadCaption) fd.append('caption', uploadCaption);
+    try {
+      const res = await fetch('/api/gallery/photos', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: fd,
+      });
+      if (res.ok) {
+        showToast('✓ Photos uploaded');
+        setUploadFiles([]);
+        setUploadCaption('');
+        fetchGallery(galleryEventId);
+      } else {
+        showToast('Upload failed', 'error');
+      }
+    } catch { showToast('Upload error', 'error'); }
+    finally { setUploading(false); }
+  };
+
+  const togglePublished = async (photo) => {
+    const res = await fetch(`/api/gallery/photos/${photo.id}`, {
+      method: 'PATCH', headers: adminHeaders(),
+      body: JSON.stringify({ published: !photo.published }),
+    });
+    if (res.ok) fetchGallery(galleryEventId);
+    else showToast('Failed to update', 'error');
+  };
+
+  const deletePhoto = async (photo) => {
+    if (!confirm('Delete this photo? This cannot be undone.')) return;
+    const res = await fetch(`/api/gallery/photos/${photo.id}`, { method: 'DELETE', headers: adminHeaders() });
+    if (res.ok) { showToast('Photo deleted'); fetchGallery(galleryEventId); }
+    else showToast('Delete failed', 'error');
+  };
+
   const toggleSponsorActive = async (sponsor) => {
     await fetch(`/api/sponsors/${sponsor.id}`, {
       method: 'PATCH', headers: adminHeaders(),
@@ -422,6 +478,7 @@ export default function PortalAdminPage() {
               { key: 'events', label: 'Events', badge: null },
               { key: 'checkin', label: 'Check-In', badge: null },
               { key: 'sponsors', label: 'Sponsors', badge: null },
+              { key: 'gallery', label: 'Gallery', badge: null },
             ].map(t => (
               <button
                 key={t.key}
@@ -1129,6 +1186,118 @@ export default function PortalAdminPage() {
                     </>
                   )}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* GALLERY TAB */}
+          {tab === 'gallery' && (
+            <div>
+              {/* Event selector */}
+              <div className="mb-6">
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">Select Event</label>
+                <select
+                  value={galleryEventId}
+                  onChange={e => { setGalleryEventId(e.target.value); fetchGallery(e.target.value); }}
+                  className="w-full max-w-sm px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-white/30"
+                >
+                  <option value="" className="bg-black">— Pick an event —</option>
+                  {events.map(ev => (
+                    <option key={ev.id} value={ev.id} className="bg-black">
+                      {ev.title || ev.name}{ev.date_time ? ` — ${new Date(ev.date_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {!galleryEventId && (
+                <div className="text-center py-20 text-gray-600">
+                  <i className="ph ph-images text-4xl mb-4"></i>
+                  <p>Select an event above to manage its photos.</p>
+                </div>
+              )}
+
+              {galleryEventId && (
+                <>
+                  {/* Upload form */}
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-4">Upload Photos</p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Images</label>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={e => setUploadFiles(Array.from(e.target.files))}
+                          className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-white/10 file:text-white hover:file:bg-white/20 file:cursor-pointer"
+                        />
+                        {uploadFiles.length > 0 && (
+                          <p className="text-gray-600 text-xs mt-1">{uploadFiles.length} file{uploadFiles.length !== 1 ? 's' : ''} selected</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Caption <span className="text-gray-600 normal-case tracking-normal font-normal">(optional, applies to all)</span></label>
+                        <input
+                          type="text"
+                          value={uploadCaption}
+                          onChange={e => setUploadCaption(e.target.value)}
+                          placeholder="e.g. Summer Slam highlights"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-white/40"
+                        />
+                      </div>
+                      <button
+                        onClick={uploadPhotos}
+                        disabled={!uploadFiles.length || uploading}
+                        className="px-6 py-2.5 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40"
+                      >
+                        {uploading ? 'Uploading...' : `Upload ${uploadFiles.length > 0 ? uploadFiles.length + ' ' : ''}Photo${uploadFiles.length !== 1 ? 's' : ''}`}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Photo grid */}
+                  {galleryLoading ? (
+                    <div className="text-center py-12 text-gray-500 text-sm">Loading photos...</div>
+                  ) : galleryPhotos.length === 0 ? (
+                    <div className="text-center py-16 text-gray-600">
+                      <i className="ph ph-image text-4xl mb-4"></i>
+                      <p>No photos yet — upload some above.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-4">{galleryPhotos.length} Photo{galleryPhotos.length !== 1 ? 's' : ''}</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {galleryPhotos.map(photo => (
+                          <div key={photo.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                            <img
+                              src={`/api/gallery/photos/${photo.id}/serve`}
+                              alt={photo.caption || 'Event photo'}
+                              className="w-full aspect-square object-cover"
+                            />
+                            <div className="p-3">
+                              <p className="text-xs text-gray-400 mb-3 truncate">{photo.caption || <span className="text-gray-600">(no caption)</span>}</p>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => togglePublished(photo)}
+                                  className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-colors ${photo.published ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30' : 'bg-white/10 border border-white/20 text-gray-400 hover:bg-white/20'}`}
+                                >
+                                  {photo.published ? 'Published' : 'Draft'}
+                                </button>
+                                <button
+                                  onClick={() => deletePhoto(photo)}
+                                  className="px-2.5 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-red-500/30 transition-colors flex-shrink-0"
+                                >
+                                  <i className="ph ph-trash text-sm"></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
               )}
             </div>
           )}
