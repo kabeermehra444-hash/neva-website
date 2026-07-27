@@ -58,8 +58,11 @@ export async function POST(request) {
 
     const resetUrl = `${SITE_URL}/reset-password?token=${token}`;
 
-    // Fire-and-forget
-    sendResetEmail(member.email, member.name || 'Member', resetUrl);
+    try {
+      await sendResetEmail(member.email, member.name || 'Member', resetUrl);
+    } catch (emailErr) {
+      console.error('Password reset email failed to send:', emailErr.message);
+    }
 
     return GENERIC_OK;
   } catch (error) {

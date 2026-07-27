@@ -7,6 +7,20 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 
 ---
 
+## Fix silent email failures in password-reset flow
+
+- `lib/email.js`: `sendEmail` now throws on terminal failure (missing
+  credential or SMTP exhausted after 3 retries) instead of returning
+  `false`. Per-attempt errors are still logged; callers can no longer
+  mistake a failed send for a success.
+- `forgot-password/route.js`: replaced fire-and-forget call with
+  `await sendResetEmail(...)` wrapped in an inner try/catch. Send
+  failures are now logged server-side (`console.error`). User-facing
+  response is still a uniform 200 regardless of whether the email
+  was found or the send succeeded — anti-enumeration behavior preserved.
+
+---
+
 ## Member token auth (gallery phase 1)
 
 - Added `lib/member-auth.js`: server-side HMAC-SHA256 member token system
