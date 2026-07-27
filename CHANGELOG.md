@@ -20,7 +20,7 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 - `lib/auth.js`: added `getMemberToken()` and `memberHeaders()` client helpers;
   `setStoredMember`/`clearStoredMember` updated to persist/clear `neva_memberToken`.
 - Known tradeoff: a revoked member retains gallery access until token expiry
-  (30 days), matching existing admin token behavior. Deliberate accepted design.
+  (14 days), matching existing admin token behavior. Deliberate accepted design.
 
 ---
 
