@@ -43,6 +43,7 @@ export default function PortalNav() {
     { label: 'Stats', href: '/portal-stats-history' },
     { label: 'Events', href: '/events' },
     { label: 'Perks', href: '/portal-perks' },
+    { label: 'Gallery', href: '/portal-gallery' },
   ];
 
   const isActive = (href) => pathname === href;

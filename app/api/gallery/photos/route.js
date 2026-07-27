@@ -1,6 +1,7 @@
 import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
+import { issuePhotoToken } from '@/lib/photo-token';
 import sql from '@/app/api/utils/sql';
 
 export async function GET(request) {
@@ -17,7 +18,7 @@ export async function GET(request) {
       WHERE event_id = ${eventId}
       ORDER BY uploaded_at DESC
     `;
-    return NextResponse.json(rows);
+    return NextResponse.json(rows.map(r => ({ ...r, view_token: issuePhotoToken(r.id) })));
   } catch (error) {
     console.error('Error fetching gallery photos:', error);
     return NextResponse.json({ error: 'Failed to fetch photos' }, { status: 500 });

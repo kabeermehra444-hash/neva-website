@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+
+// DATABASE_URL may already be in the environment (e.g. CI); .env.local is the local dev path.
+if (!process.env.DATABASE_URL) process.loadEnvFile('.env.local');
 
 const sql = neon(process.env.DATABASE_URL);
 

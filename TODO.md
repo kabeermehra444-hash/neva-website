@@ -20,6 +20,18 @@ honest — it's more useful as a real backlog than an aspirational one.
 
 - [ ] **Caching strategy** for public data (events list, leaderboard). Minor
       now; matters more at higher traffic. Currently no explicit caching.
+- [ ] **Delete gallery blobs when an event is deleted.** `gallery_photos` rows
+      cascade away with the event, but the blobs themselves are orphaned in the
+      Vercel Blob store and keep costing money. `DELETE /api/events/[id]` should
+      `del()` each photo's blob first.
+- [ ] **Gallery upload size limit.** Server-side uploads buffer the whole request
+      body; Vercel caps this at ~4.5 MB per request on Hobby (higher on Pro).
+      Typical phone photos are 3–5 MB, so batches will fail on Hobby. Switch to
+      Vercel Blob's client-upload pattern if this bites — the DB schema and API
+      contract don't change.
+- [ ] **Gallery thumbnails.** The grid currently loads full-size originals and
+      scales them down in CSS, which is slow on a large album. Generate and
+      store a smaller variant on upload.
 - [ ] **Second-admin onboarding note:** Eva must log out/in once to get her
       admin token after the auth system went live.
 

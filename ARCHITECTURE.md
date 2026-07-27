@@ -13,6 +13,8 @@ document, not a historical record.
   `@neondatabase/serverless` in `app/api/utils/sql.js`. All data lives here;
   the code is stateless.
 - **Vercel** — hosting. Pushing to `main` triggers an automatic deploy.
+- **Vercel Blob** — private storage for gallery photos, via `@vercel/blob`.
+  Requires `BLOB_READ_WRITE_TOKEN`.
 - **Gmail SMTP** (`nodemailer`) — transactional email, via `lib/email.js`.
 - **Shopify Buy Buttons** — apparel checkout (client-side embeds).
 - **PlayByPoint** — external event-entry payment (linked out per event).
@@ -37,6 +39,7 @@ Current tables (inferred from the queries in `app/api`):
 | `sponsors`                | Sponsor listings                                  |
 | `newsletter_subscribers`  | Newsletter signups                                |
 | `password_resets`         | Password reset tokens                             |
+| `gallery_photos`          | Event photos: event_id (FK, ON DELETE CASCADE), blob_url, blob_pathname, caption, published (default false) |
 
 > Schema changes are done with one-off scripts (e.g. `migrate.js`) that run
 > `ALTER TABLE` against Neon using `DATABASE_URL` from `.env.local`.
@@ -57,6 +60,14 @@ Two separate concepts — don't confuse them:
     the token's signature and expiry. No valid token → 401 Unauthorized.
   - The browser cannot forge this. Client-side `isAdmin()` only controls what
     UI shows; the server is the real gate.
+
+- **Photo access tokens (server-side).** A third, narrower token type in
+  `lib/photo-token.js`, also signed with `ADMIN_SECRET`. Browsers cannot attach
+  an `Authorization` header to `<img src>` or a download link, so the gallery
+  serve route authenticates via a signed `?t=` query parameter instead. Each
+  token is bound to a single photo id and expires in 30 minutes, so a URL that
+  leaks (browser history, logs, referrer) exposes at most one photo briefly —
+  never a 14/30-day session token.
 
 **Consequence:** if `ADMIN_SECRET` changes, all admins must log out and back
 in to get a token signed with the new secret.
@@ -83,6 +94,19 @@ at `/events/[slug]`. Registration:
 - Events auto-archive ~4 hours after they end (drop off public lists, stay in
   the admin "Archived" section).
 
+### Photo Gallery
+Admins upload event photos in the admin panel's Gallery tab. Photos go to
+**private** Vercel Blob storage (never a public URL) and are linked to an event.
+They default to `published = false` — invisible to members until toggled on.
+
+Members view published photos at `/portal-gallery`, grouped by event, and can
+download them. Both sides render images through one proxy route,
+`/api/gallery/photos/[id]/serve?t=<token>`, which verifies the photo token,
+streams the private blob via the SDK's `get()`, and adds
+`Content-Disposition: attachment` when `&download=1` is present. List endpoints
+mint the tokens server-side — the member endpoint only ever mints them for
+published photos, so unpublished photos are unreachable.
+
 ### Email
 All email goes through `sendEmail()` in `lib/email.js` (Gmail SMTP, with
 automatic retries). To change providers, only that one file changes.
@@ -98,7 +122,9 @@ app/portal-*      Member portal pages.
 app/events/[slug] Public event page. page.jsx = server (metadata),
                   EventDetailClient.jsx = the interactive client component.
 lib/admin-auth.js SERVER-side admin token logic. Security-critical.
-lib/auth.js       CLIENT-side session + adminHeaders() helper for API calls.
+lib/member-auth.js SERVER-side member token logic. Security-critical.
+lib/photo-token.js SERVER-side short-lived per-photo tokens for gallery URLs.
+lib/auth.js       CLIENT-side session + adminHeaders()/memberHeaders() helpers.
 lib/email.js      Shared email sender.
 lib/timezone.js   All event times are America/Los_Angeles.
 ```
@@ -110,6 +136,13 @@ lib/timezone.js   All event times are America/Los_Angeles.
 - **Admin API calls from the client must send the token.** Use
   `adminHeaders()` from `lib/auth.js` as the fetch `headers`. Forgetting this
   gives a 401.
+- **Browsers don't send auth headers on `<img src>` or download links.** Any
+  route serving binary content to an `<img>` or `<a download>` cannot use
+  `requireAdmin`/`requireMember` — it will 401. Use a signed query token
+  (`lib/photo-token.js`) instead.
+- **Don't send `multipart/form-data` with `adminHeaders()`** — it forces
+  `Content-Type: application/json` and the multipart boundary is lost. Pass only
+  the `Authorization` header and let the browser set `Content-Type` itself.
 - **Avoid SQL `CASE` expressions with multiple nullable parameters** — Neon's
   driver can't infer their type and the query fails at runtime. Split into
   separate statements instead. (This caused a real bug once.)

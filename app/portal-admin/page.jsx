@@ -1271,7 +1271,7 @@ export default function PortalAdminPage() {
                         {galleryPhotos.map(photo => (
                           <div key={photo.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                             <img
-                              src={`/api/gallery/photos/${photo.id}/serve`}
+                              src={`/api/gallery/photos/${photo.id}/serve?t=${photo.view_token}`}
                               alt={photo.caption || 'Event photo'}
                               className="w-full aspect-square object-cover"
                             />
@@ -1284,6 +1284,14 @@ export default function PortalAdminPage() {
                                 >
                                   {photo.published ? 'Published' : 'Draft'}
                                 </button>
+                                <a
+                                  href={`/api/gallery/photos/${photo.id}/serve?t=${photo.view_token}&download=1`}
+                                  download
+                                  className="px-2.5 py-1.5 bg-white/10 border border-white/20 text-gray-300 text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-white/20 transition-colors flex-shrink-0"
+                                  title="Download"
+                                >
+                                  <i className="ph ph-download-simple text-sm"></i>
+                                </a>
                                 <button
                                   onClick={() => deletePhoto(photo)}
                                   className="px-2.5 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-red-500/30 transition-colors flex-shrink-0"

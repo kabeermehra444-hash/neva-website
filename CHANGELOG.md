@@ -7,20 +7,31 @@ ARCHITECTURE, TODO) as current-state snapshots instead.
 
 ---
 
-## Add members-only photo gallery — Phase 1 (admin upload)
+## Add members-only photo gallery (admin upload + member viewing/download)
 
-- `scripts/migrate-gallery.js`: migration that creates `gallery_photos` table
-  (linked to events via FK, private Vercel Blob URL, `published` flag defaulting false).
-- `app/api/gallery/photos/route.js`: GET (list by event) and POST (multipart upload
-  to Vercel Blob, inserts DB row per file) — admin-only.
-- `app/api/gallery/photos/[id]/route.js`: PATCH (caption/published toggle) and
-  DELETE (blob `del()` + DB row) — admin-only.
-- `app/api/gallery/photos/[id]/serve/route.js`: GET proxy that fetches private blobs
-  with the server-side token and streams them to the browser — admin-only; no blob
-  URL is ever exposed to the client.
-- `app/portal-admin/page.jsx`: new Gallery tab (6th) with event selector, multi-file
-  upload form, photo grid with published toggle and delete per card.
-- Added `@vercel/blob` to dependencies.
+- `scripts/migrate-gallery.js`: creates the `gallery_photos` table (event FK with
+  `ON DELETE CASCADE`, private Vercel Blob URL, `published` defaulting to false).
+- `app/api/gallery/photos/route.js`: admin GET (list by event) and POST (multipart
+  upload to private Vercel Blob, one DB row per file).
+- `app/api/gallery/photos/[id]/route.js`: admin PATCH (caption / published toggle)
+  and DELETE (blob `del()` then DB row).
+- `app/api/gallery/photos/[id]/serve/route.js`: image proxy shared by admins and
+  members. Streams the private blob via the SDK's `get()`; adds
+  `Content-Disposition: attachment` when `&download=1`.
+- `app/api/gallery/member-photos/route.js`: member-facing list, **published photos
+  only**, joined with event name/date.
+- `lib/photo-token.js`: new short-lived (30 min), per-photo HMAC token.
+  Browsers cannot attach an `Authorization` header to `<img src>` or a download
+  link, so the serve route authenticates via a signed `?t=` query param instead
+  of `requireAdmin`/`requireMember` — which would have 401'd every thumbnail.
+  Tokens are minted server-side by the list endpoints only, and the member
+  endpoint mints them only for published photos, so drafts stay unreachable.
+- `app/portal-admin/page.jsx`: new Gallery tab with event selector, multi-file
+  upload, and a photo grid with publish toggle, download, and delete per card.
+- `app/portal-gallery/page.jsx`: new members-only gallery — published photos
+  grouped by event, click-to-zoom lightbox, and per-photo download.
+- `components/PortalNav.jsx`: added the Gallery link to member nav.
+- Added `@vercel/blob` to dependencies. Requires `BLOB_READ_WRITE_TOKEN`.
 
 ---
 

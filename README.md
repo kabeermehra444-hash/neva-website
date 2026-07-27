@@ -58,9 +58,12 @@ them belong in the repo.
 | `APP_ID`             | App identifier for the file-upload service                    |
 | `APP_UPLOAD_SECRET`  | Secret for the file-upload service                            |
 | `APPGEN_UPLOAD_URL`  | Upload service base URL (optional; has a default)             |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob store token for gallery photos. Added automatically when you create a Blob store in the Vercel dashboard (Storage → Create Database → Blob) and connect it to the project. |
 
 > **Important:** `ADMIN_SECRET` must be set, or no one can access admin
-> functions. After changing it, all admins must log out and back in.
+> functions. After changing it, all admins must log out and back in. It also
+> signs gallery photo URLs, so changing it breaks any photo link already open
+> in a browser tab (a refresh fixes it).
 
 ---
 
@@ -84,6 +87,16 @@ them belong in the repo.
 - People who signed up directly on PlayByPoint can be added manually as guests
   in the admin panel.
 
+### Photo gallery flow
+- Admins upload event photos in the admin panel's **Gallery** tab. Photos are
+  stored in **private** Vercel Blob storage and start as unpublished drafts.
+- An admin toggles a photo to **Published** to make it visible to members.
+- Members browse published photos at `/portal-gallery`, grouped by event, and
+  can view them full size or download them.
+- Photos are never public: every image is streamed through an authenticated
+  proxy route using a short-lived signed URL token. Nothing is visible to
+  logged-out visitors, and unpublished photos are unreachable by members.
+
 ### Roles
 - **Admins** are defined by email in `lib/admin-auth.js` (`ADMIN_EMAILS`).
   Admin actions are verified server-side with a signed token — see Security.
@@ -104,14 +117,19 @@ app/
     event-checkins         # Event day check-in
     sponsors, products     # Sponsor & product CRUD
     orders, newsletter     # Shop orders, newsletter signups
+    gallery/photos         # Gallery admin CRUD + /[id]/serve image proxy
+    gallery/member-photos  # Published photos for members
   events/[slug]            # Public event detail page
   portal-admin             # Admin control panel
+  portal-gallery           # Members-only photo gallery
   portal-*                 # Member portal (dashboard, leaderboard, stats, etc.)
   membership-apply         # Application form
   login, forgot-password, reset-password
   shop, product/[slug]     # Apparel storefront
 lib/
   admin-auth.js            # Server-side admin token signing/verification
+  member-auth.js           # Server-side member token signing/verification
+  photo-token.js           # Short-lived signed tokens for gallery photo URLs
   auth.js                  # Client-side session helpers (localStorage)
   email.js                 # Shared email sender (Gmail SMTP, with retries)
   timezone.js              # All event times handled in America/Los_Angeles
@@ -130,6 +148,11 @@ lib/
 - **Login** returns a uniform error for wrong email vs. wrong password to
   prevent account enumeration.
 - **Public endpoints never return member email addresses** — only admins do.
+- **Gallery photos are private.** They live in a private Vercel Blob store, so
+  the raw blob URL returns 401/403 on its own. Images reach the browser only
+  through `/api/gallery/photos/[id]/serve`, which requires a signed token that
+  is scoped to one photo and expires in 30 minutes. The member-facing endpoint
+  issues tokens only for published photos, so drafts can't be reached.
 
 ---
 
