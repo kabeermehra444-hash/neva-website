@@ -368,14 +368,53 @@ export default function PortalAdminPage() {
     } catch {} finally { setGalleryLoading(false); }
   };
 
+  // Resize a File to max 1600px wide using a canvas, export as JPEG q0.8.
+  // Returns { blob, name } on success, or throws with a user-readable message.
+  const resizeImage = (file) => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1600;
+      const scale = img.width > MAX ? MAX / img.width : 1;
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error(`Could not encode "${file.name}" as JPEG.`)); return; }
+        resolve({ blob, name: file.name.replace(/\.[^.]+$/, '') + '.jpg' });
+      }, 'image/jpeg', 0.8);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      // HEIC and some RAW formats cannot be decoded by the browser.
+      reject(new Error(`"${file.name}" could not be decoded by this browser. Convert to JPEG or PNG first.`));
+    };
+    img.src = url;
+  });
+
   const uploadPhotos = async () => {
     if (!galleryEventId || !uploadFiles.length) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append('event_id', galleryEventId);
-    uploadFiles.forEach(f => fd.append('file', f));
-    if (uploadCaption) fd.append('caption', uploadCaption);
     try {
+      // Resize all files client-side first; fail fast if any can't be decoded.
+      const resized = [];
+      for (const file of uploadFiles) {
+        try {
+          resized.push(await resizeImage(file));
+        } catch (err) {
+          showToast(err.message, 'error');
+          setUploading(false);
+          return;
+        }
+      }
+      const fd = new FormData();
+      fd.append('event_id', galleryEventId);
+      resized.forEach(({ blob, name }) => fd.append('file', blob, name));
+      if (uploadCaption) fd.append('caption', uploadCaption);
       const res = await fetch('/api/gallery/photos', {
         method: 'POST',
         headers: { Authorization: `Bearer ${getAdminToken()}` },
