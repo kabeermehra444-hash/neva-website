@@ -1,8 +1,4 @@
 {
-  "app/events/[slug]/page.jsx -> @/lib/auth": {
-    "id": "app/events/[slug]/page.jsx -> @/lib/auth",
-    "files": []
-  },
   "utils/screenshot-capture.js -> html2canvas": {
     "id": "utils/screenshot-capture.js -> html2canvas",
     "files": [

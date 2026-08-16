@@ -1,5 +1,6 @@
 import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { requireAdmin } from '@/lib/admin-auth';
 import { issuePhotoToken } from '@/lib/photo-token';
 import sql from '@/app/api/utils/sql';
@@ -41,9 +42,18 @@ export async function POST(request) {
     const created = [];
 
     for (const file of files) {
-      const pathname = `gallery/${eventId}/${Date.now()}-${file.name}`;
-      const blob = await put(pathname, file, {
+      const inputBuffer = Buffer.from(await file.arrayBuffer());
+      const resized = await sharp(inputBuffer)
+        .resize({ width: 1600, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+
+      // Store with .jpg extension regardless of the original format.
+      const baseName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+      const pathname = `gallery/${eventId}/${Date.now()}-${baseName}`;
+      const blob = await put(pathname, resized, {
         access: 'private',
+        contentType: 'image/jpeg',
         token: process.env.BLOB_READ_WRITE_TOKEN,
       });
 
