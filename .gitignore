@@ -5,3 +5,8 @@ node_modules/
 .env*
 *.patch
 .claude/launch.json
+
+.env
+.env.*
+.next/
+.DS_Store
